@@ -8,6 +8,7 @@
 const int Builder::CYLINDER_SIDE_NUM_VERTICES = 48;
 const int Builder::CYLINDER_TOP_NUM_VERTICES = 48;
 
+// Vértices de um cubo para serem transformados
 const std::vector<glm::vec3> Builder::cube_vertices = {
 	{0.0f, 0.0f, 1.0f},
 	{0.0f, 1.0f, 1.0f},
@@ -44,6 +45,7 @@ const std::vector<glm::vec3> Builder::cube_vertices = {
 	{1.0f, 1.0f, 0.0f},
 };
 
+// Base octogonal para criar um cilindro
 const std::vector<glm::vec3> Builder::cylinder_vertices_2d = {
 	{+1.0f, +0.0f, +0.0f},
 	{+0.7f, +0.7f, +0.0f},
@@ -57,9 +59,11 @@ const std::vector<glm::vec3> Builder::cylinder_vertices_2d = {
 
 std::vector<glm::vec3> Builder::cylinder_vertices = {};
 
+// Adiciona os vértices de um cubo transformado na lista fornecida
 void Builder::addCube(std::vector<glm::vec3>& vertices, const glm::mat4& transform) {
 	std::array<glm::vec3, 4> face_vertices;
 
+	// A cada 4 vértices (uma face), aplica a transformação e adiciona à malha final
 	for(size_t i = 0; i < cube_vertices.size(); i += 4) {
 		for(size_t j = 0; j < 4; j++) {
 			face_vertices[j] = applyTransform(cube_vertices[i + j], transform);
@@ -76,7 +80,9 @@ void Builder::addCube(std::vector<glm::vec3>& vertices, const glm::mat4& transfo
 	*/
 }
 
+// Adiciona os vértices de um cilindro transformado na lista fornecida
 void Builder::addCylinder(std::vector<glm::vec3>& vertices, const glm::mat4& transform) {
+	// Gera a malha base do cilindro apenas na primeira vez que for chamado
 	if(cylinder_vertices.empty()) {
 		fillCylinder();
 	}
@@ -86,6 +92,7 @@ void Builder::addCylinder(std::vector<glm::vec3>& vertices, const glm::mat4& tra
 	}
 }
 
+// Converte um quadrilátero em dois triângulos (necessários para o OpenGL)
 void Builder::addQuad(std::vector<glm::vec3>& vertices, const std::array<glm::vec3, 4> points) {
 	for(int i = 0; i < 3; i++) {
 		vertices.push_back(
@@ -100,13 +107,16 @@ void Builder::addQuad(std::vector<glm::vec3>& vertices, const std::array<glm::ve
 	}
 }
 
+// Multiplica a matriz de transformação pela posição base do vértice
 glm::vec3 Builder::applyTransform(const glm::vec3& vertex, const glm::mat4& transform) {
 	return glm::vec3(transform * glm::vec4(vertex, 1.0f));
 }
 
+// Constrói a geometria base do cilindro
 void Builder::fillCylinder(void) {
 	glm::vec3 offset(0.0f, 0.0f, 1.0f);
 
+	// Cria as tampas do cilindro, unindo o centro às bordas
 	for(size_t i = 0; i < 8; i++) {
 		cylinder_vertices.emplace_back(glm::vec3(0.0f) + offset);
 		cylinder_vertices.emplace_back(cylinder_vertices_2d[(i + 1) % 8] + offset);
@@ -117,6 +127,7 @@ void Builder::fillCylinder(void) {
 		cylinder_vertices.emplace_back(cylinder_vertices_2d[i + 0] - offset);
 	}
 
+	// Cria a parede lateral ligando os pontos de cima e de baixo
 	for(size_t i = 0; i < 8; i++) {
 		std::array<glm::vec3, 4> quad_arr = {
 			cylinder_vertices_2d[(i + 0)] + offset,
@@ -135,6 +146,7 @@ void Builder::fillCylinder(void) {
 		*/
 	}
 
+	// Ajusta a posição para que a origem da forma fique coerente (entre 0 e 1)
 	for(auto& vertex : cylinder_vertices) {
 		vertex += glm::vec3(1.0f, 1.0f, 1.0f);
 		vertex /= 2;

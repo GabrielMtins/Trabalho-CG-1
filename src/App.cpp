@@ -10,6 +10,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
+// Código fonte do Vertex Shader (calcula a posição dos vértices na tela)
 static const char *vertex_shader_src = "#version 330 core\n"
     "layout (location = 0) in vec3 a_position;\n"
     "uniform mat4 u_model;"
@@ -21,6 +22,7 @@ static const char *vertex_shader_src = "#version 330 core\n"
     "   gl_Position = mvp * vec4(a_position, 1.0f);\n"
     "}\0";
 
+// Código fonte do Fragment Shader (calcula a cor dos pixels)
 static const char *fragment_shader_src = "#version 330 core\n"
     "out vec4 FragColor;\n"
 	"uniform vec3 u_color;"
@@ -33,6 +35,7 @@ static const char *fragment_shader_src = "#version 330 core\n"
 App::App(void) {
 	glfwInit();
 
+	// Configura o GLFW para usar o OpenGL 3.3 Core Profile
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
@@ -47,12 +50,14 @@ App::App(void) {
 
 	glfwMakeContextCurrent(window);
 
+	// Carrega os ponteiros de função do OpenGL usando o GLAD
 	if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		printf("Failed to initialize OpenGL.\n");
 		exit(-1);
 	}
 
 	glViewport(0, 0, 800, 600);
+	// Habilita o teste de profundidade para que objetos mais próximos cubram os mais distantes
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
@@ -63,8 +68,10 @@ App::App(void) {
 	//Builder::addCube(vertices, model);
 	Builder::addCylinder(vertices, model);
 
+	// Compila os shaders
 	main_shader = std::make_unique<Shader>(vertex_shader_src, fragment_shader_src);
 
+	// Constrói os objetos da cena
 	build();
 }
 
@@ -78,21 +85,25 @@ App::~App(void) {
 }
 
 void App::loop(void) {
+	// Limpa a tela e o buffer de profundidade a cada frame
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glm::mat4 model(1.0f);
 	glm::mat4 view(1.0f);
 	
+	// Afasta a câmera da origem
 	view = glm::translate(view, glm::vec3(-4.0f, -2.9f, -12.0f));
 	view = glm::rotate(view, 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 
+	// Envia as matrizes de transformação para o shader
 	main_shader->setUniformMat4("u_model", model);
 	main_shader->setUniformMat4("u_view", view);
 	main_shader->setUniformMat4("u_projection", glm::perspective(glm::radians(45.0f), 1.33f, 0.01f, 100.0f));
 
 	main_shader->use();
 	
+	// Renderiza o controle
 	controller.render(*main_shader);
 
 	glfwSwapBuffers(window);
@@ -105,6 +116,7 @@ void App::build(void) {
 	buildController();
 }
 
+// Constrói a geometria da mesa
 void App::buildTable(void) {
 	std::vector<glm::vec3> vertices;
 
@@ -118,11 +130,13 @@ void App::buildTable(void) {
 	const float table_foot_thickness = 0.2f;
 	const float table_foot_height = 6.0f;
 
+	// Tampo da mesa
 	model = glm::scale(model, glm::vec3(table_width, table_thickness, table_height));
 
 	Builder::addCube(vertices, model);
 	table.addCubeShading(counter, color);
 
+	// Constrói os 4 pés da mesa
 	for(int i = 0; i < 2; i++) {
 		for(int j = 0; j < 2; j++) {
 			model = glm::mat4(1.0f);
@@ -141,7 +155,7 @@ void App::buildTable(void) {
 	table.object = std::make_unique<Object3d>(vertices);
 }
 
-
+// Constrói a geometria do SNES
 void App::buildSnes(void) {
 	std::vector<glm::vec3> vertices;
 	glm::mat4 model(1.0f);
@@ -152,6 +166,7 @@ void App::buildSnes(void) {
 	const glm::vec3 power_color(0.45f, 0.25f, 0.86f);
 	const glm::vec3 reset_color(0.5f);
 
+	// Base do console
 	{
 		model = glm::mat4(1.0f);
 		model = glm::scale(model, glm::vec3(32.0f, 8.0f, 48.0f));
@@ -160,6 +175,7 @@ void App::buildSnes(void) {
 		snes.addCubeShading(counter, base_color);
 	}
 
+	// Parte mais elevada do console
 	{
 		model = glm::mat4(1.0f);
 
@@ -170,6 +186,7 @@ void App::buildSnes(void) {
 		snes.addCubeShading(counter, base_color);
 	}
 
+	// Detalhes frontais e botões laterais (Power/Eject)
 	for(int i = 0; i < 2; i++) {
 		model = glm::mat4(1.0f);
 
@@ -188,6 +205,7 @@ void App::buildSnes(void) {
 		snes.addCubeShading(counter, power_color);
 	}
 
+	// Botão Reset
 	{
 		model = glm::mat4(1.0f);
 
@@ -198,6 +216,7 @@ void App::buildSnes(void) {
 		snes.addCubeShading(counter, reset_color);
 	}
 
+	// Aplica a escala final em todos os vértices gerados
 	for(auto& vertex : vertices) {
 		vertex *= final_scale;
 	}
@@ -205,6 +224,7 @@ void App::buildSnes(void) {
 	snes.object = std::make_unique<Object3d>(vertices);
 }
 
+// Constrói a geometria do controle do SNES
 void App::buildController(void) {
 	std::vector<glm::vec3> vertices;
 
@@ -215,6 +235,7 @@ void App::buildController(void) {
 	float final_scale = 0.20f;
 	const glm::vec3 base_color(0.7f);
 
+	// Lado esquerdo
 	{
 		model = glm::mat4(1.0f);
 
@@ -224,6 +245,7 @@ void App::buildController(void) {
 		controller.addCylinderShading(counter, base_color);
 	}
 
+	// Parte central do controle
 	{
 		model = glm::mat4(1.0f);
 
@@ -234,6 +256,7 @@ void App::buildController(void) {
 		controller.addCubeShading(counter, base_color);
 	}
 
+	// Lado direito
 	{
 		model = glm::mat4(1.0f);
 
@@ -244,6 +267,7 @@ void App::buildController(void) {
 		controller.addCylinderShading(counter, base_color);
 	}
 
+	// Direcional do controle
 	{
 		model = glm::mat4(1.0f);
 
@@ -262,6 +286,7 @@ void App::buildController(void) {
 		controller.addCubeShading(counter, glm::vec3(0.1f));
 	}
 
+	// Botões do controle (A, B, X, Y)
 	{
 		model = glm::mat4(1.0f);
 
@@ -296,6 +321,7 @@ void App::buildController(void) {
 		controller.addCylinderShading(counter, glm::vec3(1.0f, 1.0f, 0.0f));
 	}
 
+	// Botões Start e Select no centro do controle
 	for(int i = 0; i < 2; i++) {
 		model = glm::mat4(1.0f);
 
