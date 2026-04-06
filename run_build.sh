@@ -1,3 +1,3 @@
 #!/bin/sh
 
-make && make run
+make -j16 && make run

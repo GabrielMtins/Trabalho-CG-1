@@ -79,6 +79,10 @@ App::~App(void) {
 }
 
 void App::loop(void) {
+	float current_frame = float(glfwGetTime());
+	dt = current_frame - last_frame;
+	last_frame = current_frame;
+
 	// Limpa a tela e o buffer de profundidade a cada frame
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -90,14 +94,16 @@ void App::loop(void) {
 	main_shader->setUniformMat4("u_projection", projection);
 	main_shader->use();
 	
-	// Renderiza o controle
+	// Renderiza os objetos
 	table.render(*main_shader);
 	snes.render(*main_shader);
 	controller.render(*main_shader);
 	monitor.render(*main_shader);
 	pacman.render(*main_shader);
+	book.render(*main_shader);
+	button.render(*main_shader);
 
-	logic.processInput(window);
+	logic.processInput(window, dt);
 	glfwSwapBuffers(window);
 	glfwPollEvents();
 }
@@ -108,6 +114,8 @@ void App::build(void) {
 	buildController();
 	buildMonitor();
 	buildPacman();
+	buildBook();
+	buildButton();
 	buildScene();
 }
 
@@ -282,6 +290,8 @@ void App::buildController(void) {
 
 	// Botões do controle (A, B, X, Y)
 	{
+		// botão vermelho
+		/*
 		model = glm::mat4(1.0f);
 
 		model = glm::translate(model, glm::vec3(34.0f, 6.0f, 4.0f));
@@ -289,6 +299,7 @@ void App::buildController(void) {
 
 		Builder::addCylinder(vertices, model);
 		controller.addCylinderShading(counter, glm::vec3(1.0f, 0.0f, 0.0f));
+		*/
 
 		model = glm::mat4(1.0f);
 
@@ -477,6 +488,113 @@ void App::buildPacman(void) {
 	pacman.object = std::make_unique<Object3d>(vertices);
 }
 
+void App::buildBook(void) {
+	std::vector<glm::vec3> vertices;
+
+	glm::mat4 model(1.0f);
+	int counter = 0;
+
+	const float final_scale = 1.0f / 32.0f;
+	const glm::vec3 base_color(0.76f, 0.44f, 0.25f);
+
+	for(int i = 0; i < 2; i++){
+		model = glm::mat4(1.0f);
+
+		model = glm::translate(model, glm::vec3(0.0f, 0.0f + i * 5.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(16.0f, 1.0f, 32.0f));
+
+		Builder::addCube(vertices, model);
+		book.addCubeShading(counter, base_color);
+	}
+
+	{
+		model = glm::mat4(1.0f);
+
+		model = glm::translate(model, glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(1.0f, 5.0f, 32.0f));
+
+		Builder::addCube(vertices, model);
+		book.addCubeShading(counter, base_color);
+	}
+
+	{
+		model = glm::mat4(1.0f);
+
+		model = glm::translate(model, glm::vec3(1.0f, 1.0f, 1.0f));
+		model = glm::scale(model, glm::vec3(14.0f, 4.0f, 30.0f));
+
+		Builder::addCube(vertices, model);
+		book.addCubeShading(counter, glm::vec3(1.0f));
+	}
+
+	for(int i = 0; i < 2; i++) {
+		model = glm::mat4(1.0f);
+
+		model = glm::translate(model, glm::vec3(4.0f, 6.1f, 8.0f));
+		model = glm::translate(model, glm::vec3(2.0f, 0.0f, 8.0f * i));
+		model = glm::scale(model, glm::vec3(4.0f, 0.01f, 1.0f));
+
+		Builder::addCube(vertices, model);
+	}
+
+	for(int i = 0; i < 2; i++) {
+		for(int j = 0; j < 2; j++) {
+			model = glm::mat4(1.0f);
+
+			model = glm::translate(model, glm::vec3(4.0f, 6.1f, 8.0f));
+			model = glm::translate(model, glm::vec3(1.0f + 5.0f * i, 0.0f, 1.0f + 6.0f * j));
+			model = glm::scale(model, glm::vec3(1.0f, 0.01f, 1.0f));
+
+			Builder::addCube(vertices, model);
+
+		}
+	}
+
+	{
+		model = glm::mat4(1.0f);
+
+		model = glm::translate(model, glm::vec3(4.0f, 6.1f, 8.0f));
+		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 2.0f));
+		model = glm::scale(model, glm::vec3(1.0f, 0.01f, 4.0f));
+
+		Builder::addCube(vertices, model);
+	}
+
+	/* 7 cubos cada um com 36 vértices */
+	book.parts.emplace_back(counter, 7 * 36, glm::vec3(1.0f));
+
+	for(auto& vertex : vertices) {
+		vertex *= final_scale;
+	}
+
+	book.object = std::make_unique<Object3d>(vertices);
+}
+
+void App::buildButton(void) {
+	std::vector<glm::vec3> vertices;
+
+	glm::mat4 model(1.0f);
+	int counter = 0;
+
+	const float final_scale = 1.0f / 40.0f;
+
+	{
+		model = glm::mat4(1.0f);
+
+		model = glm::translate(model, glm::vec3(34.0f, 6.0f, 4.0f));
+		model = glm::scale(model, glm::vec3(3.0f, 3.0f, 1.5f));
+
+		Builder::addCylinder(vertices, model);
+		button.addCylinderShading(counter, glm::vec3(1.0f, 0.0f, 0.0f));
+	}
+
+	for(auto& vertex : vertices) {
+		vertex *= final_scale;
+	}
+
+	button.object = std::make_unique<Object3d>(vertices);
+}
+
 void App::buildScene(void) {
 	glm::mat4 model;
 	view = glm::mat4(1.0f);
@@ -492,8 +610,9 @@ void App::buildScene(void) {
 	model = glm::rotate(model, -0.3f, glm::vec3(0.0f, 1.0f, 0.0f));
 	monitor.model = model;
 
-	model = glm::translate(model, glm::vec3(0.5f, 0.2f, 0.2f));
+	model = glm::translate(model, glm::vec3(0.4f, 0.3f, 0.2f));
 	model = glm::scale(model, glm::vec3(0.25f));
+	logic.base_pacman_model = model;
 	pacman.model = model;
 
 	model = glm::mat4(1.0f);
@@ -505,13 +624,11 @@ void App::buildScene(void) {
 	model = glm::scale(model, glm::vec3(4.0f));
 	model = glm::rotate(model, -3.2f, glm::vec3(0.0f, 1.0f, 0.0f));
 	snes.model = model;
-
-	model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(3.0f, 0.2f, 6.0f));
-	model = glm::scale(model, glm::vec3(4.0f));
-	controller.model = model;
 }
 
 void App::updateScene(void) {
 	controller.model = logic.controller_model;
+	pacman.model = logic.pacman_model;
+	book.model = logic.book_model;
+	button.model = logic.button_model;
 }

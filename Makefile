@@ -3,14 +3,17 @@ GL_FLAGS   := -lGL -lm
 INCLUDE_DIR := -I./external/glm -I./external/glad/include -I./include
 CCX_FLAGS := -std='c++17' -Wall -Wextra
 
-all: app.o builder.o main.o object3d.o objecthandler.o shader.o glad.o
-	g++ $(INCLUDE_DIR) $(CCX_FLAGS) app.o builder.o main.o object3d.o objecthandler.o shader.o glad.o -o main $(GL_FLAGS) $(GLFW_FLAGS)
+all: app.o builder.o logic.o main.o object3d.o objecthandler.o shader.o glad.o
+	g++ $(INCLUDE_DIR) $(CCX_FLAGS) *.o -o main $(GL_FLAGS) $(GLFW_FLAGS)
 
 app.o: src/App.cpp include/App.hpp
 	g++ $(INCLUDE_DIR) $(CCX_FLAGS) $(GL_FLAGS) $(GLFW_FLAGS) -c src/App.cpp -o app.o
 
 builder.o: src/Builder.cpp include/Builder.hpp
 	g++ $(INCLUDE_DIR) $(CCX_FLAGS) $(GL_FLAGS) $(GLFW_FLAGS) -c src/Builder.cpp -o builder.o
+
+logic.o: src/Logic.cpp include/Logic.hpp
+	g++ $(INCLUDE_DIR) $(CCX_FLAGS) $(GL_FLAGS) $(GLFW_FLAGS) -c src/Logic.cpp -o logic.o
 
 main.o: src/main.cpp 
 	g++ $(INCLUDE_DIR) $(CCX_FLAGS) $(GL_FLAGS) $(GLFW_FLAGS) -c src/main.cpp -o main.o

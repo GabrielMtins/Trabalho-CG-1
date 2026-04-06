@@ -28,6 +28,8 @@ class App {
 		void buildController(void);
 		void buildMonitor(void);
 		void buildPacman(void);
+		void buildBook(void);
+		void buildButton(void);
 		void buildScene(void);
 		void updateScene(void);
 
@@ -45,6 +47,11 @@ class App {
 		ObjectHandler controller;
 		ObjectHandler monitor;
 		ObjectHandler pacman;
+		ObjectHandler book;
+		ObjectHandler button;
+
+		float last_frame = 0.0f;
+		float dt = 0.0f;
 };
 
 #endif
