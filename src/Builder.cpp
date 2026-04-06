@@ -5,40 +5,39 @@
 #include <cmath>
 
 const std::vector<glm::vec3> Builder::cube_vertices = {
-	{-0.5, -0.5, +0.5},
-	{+0.5, -0.5, +0.5},
-	{-0.5, +0.5, +0.5},
-	{+0.5, +0.5, +0.5},
-
-	// Face 2 do Cubo
-	{+0.5, -0.5, +0.5},
-	{+0.5, -0.5, -0.5},		 
-	{+0.5, +0.5, +0.5},
-	{+0.5, +0.5, -0.5},
+	{0.0f, 0.0f, 1.0f},
+	{0.0f, 1.0f, 1.0f},
+	{1.0f, 1.0f, 1.0f},
+	{1.0f, 0.0f, 1.0f},
 	
-	// Face 3 do Cubo
-	{+0.5, -0.5, -0.5},
-	{-0.5, -0.5, -0.5},			
-	{+0.5, +0.5, -0.5},
-	{-0.5, +0.5, -0.5},
+	{0.0f, 0.0f, 0.0f},			
+	{1.0f, 0.0f, 0.0f},
+	{1.0f, 1.0f, 0.0f},
+	{0.0f, 1.0f, 0.0f},
 
-	// Face 4 do Cubo
-	{-0.5, -0.5, -0.5},
-	{-0.5, -0.5, +0.5},		 
-	{-0.5, +0.5, -0.5},
-	{-0.5, +0.5, +0.5},
+	// face 3
+	{0.0f, 0.0f, 1.0f},		 
+	{0.0f, 0.0f, 0.0f},
+	{0.0f, 1.0f, 0.0f},
+	{0.0f, 1.0f, 1.0f},
 
-	// Face 5 do Cubo
-	{-0.5, -0.5, -0.5},
-	{+0.5, -0.5, -0.5},		 
-	{-0.5, -0.5, +0.5},
-	{+0.5, -0.5, +0.5},
+	// face 6
+	{1.0f, 0.0f, 0.0f},		 
+	{1.0f, 0.0f, 1.0f},
+	{1.0f, 1.0f, 1.0f},
+	{1.0f, 1.0f, 0.0f},
+
+	// face 4
+	{1.0f, 0.0f, 0.0f},		 
+	{0.0f, 0.0f, 0.0f},
+	{0.0f, 0.0f, 1.0f},
+	{1.0f, 0.0f, 1.0f},
 	
-	// Face 6 do Cubo
-	{-0.5, +0.5, +0.5},
-	{+0.5, +0.5, +0.5},		   
-	{-0.5, +0.5, -0.5},
-	{+0.5, +0.5, -0.5}
+	// face 5
+	{1.0f, 1.0f, 1.0f},		   
+	{0.0f, 1.0f, 1.0f},
+	{0.0f, 1.0f, 0.0f},
+	{1.0f, 1.0f, 0.0f},
 };
 
 const std::vector<glm::vec3> Builder::cylinder_vertices_2d = {
@@ -55,9 +54,22 @@ const std::vector<glm::vec3> Builder::cylinder_vertices_2d = {
 std::vector<glm::vec3> Builder::cylinder_vertices = {};
 
 void Builder::addCube(std::vector<glm::vec3>& vertices, const glm::mat4& transform) {
+	std::array<glm::vec3, 4> face_vertices;
+
+	for(size_t i = 0; i < cube_vertices.size(); i += 4) {
+		for(size_t j = 0; j < 4; j++) {
+			face_vertices[j] = applyTransform(cube_vertices[i + j], transform);
+		}
+
+		addQuad(vertices, face_vertices);
+	}
+
+	/*
 	for(const glm::vec3& vertex : cube_vertices) {
+		std::array
 		vertices.push_back(applyTransform(vertex, transform));
 	}
+	*/
 }
 
 void Builder::addCylinder(std::vector<glm::vec3>& vertices, const glm::mat4& transform) {
@@ -67,6 +79,20 @@ void Builder::addCylinder(std::vector<glm::vec3>& vertices, const glm::mat4& tra
 
 	for(const glm::vec3& vertex : cylinder_vertices) {
 		vertices.push_back(applyTransform(vertex, transform));
+	}
+}
+
+void Builder::addQuad(std::vector<glm::vec3>& vertices, const std::array<glm::vec3, 4> points) {
+	for(int i = 0; i < 3; i++) {
+		vertices.push_back(
+				points[i]
+				);
+	}
+
+	for(int i = 0; i < 3; i++) {
+		vertices.push_back(
+				points[(i + 2) % 4]
+				);
 	}
 }
 

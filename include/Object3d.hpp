@@ -11,6 +11,7 @@ class Object3d {
 		Object3d(const std::vector<glm::vec3> vertices);
 
 		void render(void);
+		void renderPart(int first, int count);
 
 		~Object3d(void);
 

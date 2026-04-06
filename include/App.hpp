@@ -8,6 +8,7 @@
 
 #include "Shader.hpp"
 #include "Object3d.hpp"
+#include "ObjectHandler.hpp"
 
 class App {
 	public:
@@ -20,10 +21,18 @@ class App {
 	private:
 		void loop(void);
 
+		void build(void);
+		void buildTable(void);
+		void buildSnes(void);
+
+
 		GLFWwindow *window = NULL;
 
 		std::unique_ptr<Shader> main_shader = nullptr;
 		std::unique_ptr<Object3d> simple_triangle = nullptr;
+
+		ObjectHandler table;
+		ObjectHandler snes;
 };
 
 #endif
