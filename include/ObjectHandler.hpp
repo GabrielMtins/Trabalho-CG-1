@@ -16,7 +16,7 @@ struct MeshPart {
 };
 
 struct ObjectHandler {
-	std::unique_ptr<Object3d> object;
+	std::unique_ptr<Object3d> object = nullptr;
 	std::vector<MeshPart> parts;
 	glm::mat4 model = glm::mat4(1.0f);
 

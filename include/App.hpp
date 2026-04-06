@@ -29,7 +29,6 @@ class App {
 		GLFWwindow *window = NULL;
 
 		std::unique_ptr<Shader> main_shader = nullptr;
-		std::unique_ptr<Object3d> simple_triangle = nullptr;
 
 		ObjectHandler table;
 		ObjectHandler snes;

@@ -29,12 +29,6 @@ static const char *fragment_shader_src = "#version 330 core\n"
     "   FragColor = vec4(u_color, 1.0f);\n"
     "}\n\0";
 
-static const std::vector<glm::vec3> triangle_vertices = {
-	{-0.5f, -0.5f, 0.0f},
-	{ 0.5f, -0.5f, 0.0f},
-	{ 0.0f,  0.5f, 0.0f},
-};
-
 
 App::App(void) {
 	glfwInit();
@@ -69,7 +63,6 @@ App::App(void) {
 	//Builder::addCube(vertices, model);
 	Builder::addCylinder(vertices, model);
 
-	simple_triangle = std::make_unique<Object3d>(vertices);
 	main_shader = std::make_unique<Shader>(vertex_shader_src, fragment_shader_src);
 
 	build();
