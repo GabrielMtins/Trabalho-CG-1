@@ -21,6 +21,7 @@ struct ObjectHandler {
 	glm::mat4 model = glm::mat4(1.0f);
 
 	void addCubeShading(int& counter, const glm::vec3& color);
+	void addCylinderShading(int& counter, const glm::vec3& color);
 	void render(Shader& shader);
 };
 

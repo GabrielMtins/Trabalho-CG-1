@@ -3,6 +3,10 @@
 #include "glm/vec4.hpp"
 
 #include <cmath>
+#include <cstdio>
+
+const int Builder::CYLINDER_SIDE_NUM_VERTICES = 48;
+const int Builder::CYLINDER_TOP_NUM_VERTICES = 48;
 
 const std::vector<glm::vec3> Builder::cube_vertices = {
 	{0.0f, 0.0f, 1.0f},
@@ -101,26 +105,38 @@ glm::vec3 Builder::applyTransform(const glm::vec3& vertex, const glm::mat4& tran
 }
 
 void Builder::fillCylinder(void) {
-	glm::vec3 offset(0.0f, 0.0f, 0.5f);
+	glm::vec3 offset(0.0f, 0.0f, 1.0f);
 
-	for(size_t i = 0; i < 4; i++) {
+	for(size_t i = 0; i < 8; i++) {
+		cylinder_vertices.emplace_back(glm::vec3(0.0f) + offset);
 		cylinder_vertices.emplace_back(cylinder_vertices_2d[(i + 1) % 8] + offset);
 		cylinder_vertices.emplace_back(cylinder_vertices_2d[i + 0] + offset);
-		cylinder_vertices.emplace_back(cylinder_vertices_2d[(i + 4) % 8] + offset);
-		cylinder_vertices.emplace_back(cylinder_vertices_2d[(i + 5) % 8] + offset);
-	}
 
-	for(size_t i = 0; i < 4; i++) {
+		cylinder_vertices.emplace_back(glm::vec3(0.0f) - offset);
 		cylinder_vertices.emplace_back(cylinder_vertices_2d[(i + 1) % 8] - offset);
 		cylinder_vertices.emplace_back(cylinder_vertices_2d[i + 0] - offset);
-		cylinder_vertices.emplace_back(cylinder_vertices_2d[(i + 4) % 8] - offset);
-		cylinder_vertices.emplace_back(cylinder_vertices_2d[(i + 5) % 8] - offset);
 	}
 
 	for(size_t i = 0; i < 8; i++) {
+		std::array<glm::vec3, 4> quad_arr = {
+			cylinder_vertices_2d[(i + 0)] + offset,
+			cylinder_vertices_2d[(i + 1) % 8] + offset,
+			cylinder_vertices_2d[(i + 1) % 8] - offset,
+			cylinder_vertices_2d[(i + 0)] - offset,
+		};
+
+		addQuad(cylinder_vertices, quad_arr);
+
+		/*
 		cylinder_vertices.emplace_back(cylinder_vertices_2d[(i + 0)] + offset);
 		cylinder_vertices.emplace_back(cylinder_vertices_2d[(i + 1) % 8] + offset);
 		cylinder_vertices.emplace_back(cylinder_vertices_2d[(i + 0)] - offset);
 		cylinder_vertices.emplace_back(cylinder_vertices_2d[(i + 1) % 8] - offset);
+		*/
+	}
+
+	for(auto& vertex : cylinder_vertices) {
+		vertex += glm::vec3(1.0f, 1.0f, 1.0f);
+		vertex /= 2;
 	}
 }

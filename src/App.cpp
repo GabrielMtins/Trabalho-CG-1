@@ -10,20 +10,6 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
-static const char *vertex_shader_2d_src = "#version 330 core\n"
-    "layout (location = 0) in vec3 aPos;\n"
-    "void main()\n"
-    "{\n"
-    "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-    "}\0";
-
-static const char *fragment_shader_2d_src = "#version 330 core\n"
-    "out vec4 FragColor;\n"
-    "void main()\n"
-    "{\n"
-    "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-    "}\n\0";
-
 static const char *vertex_shader_src = "#version 330 core\n"
     "layout (location = 0) in vec3 a_position;\n"
     "uniform mat4 u_model;"
@@ -105,8 +91,8 @@ void App::loop(void) {
 	glm::mat4 model(1.0f);
 	glm::mat4 view(1.0f);
 	
-	view = glm::translate(view, glm::vec3(1.5f, -2.9f, -7.0f));
-	view = glm::rotate(view, 2.9f, glm::vec3(0.0f, 1.0f, 0.0f));
+	view = glm::translate(view, glm::vec3(-4.0f, -2.9f, -12.0f));
+	view = glm::rotate(view, 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 
 	main_shader->setUniformMat4("u_model", model);
 	main_shader->setUniformMat4("u_view", view);
@@ -114,7 +100,7 @@ void App::loop(void) {
 
 	main_shader->use();
 	
-	snes.render(*main_shader);
+	controller.render(*main_shader);
 
 	glfwSwapBuffers(window);
 	glfwPollEvents();
@@ -123,6 +109,7 @@ void App::loop(void) {
 void App::build(void) {
 	buildTable();
 	buildSnes();
+	buildController();
 }
 
 void App::buildTable(void) {
@@ -166,12 +153,11 @@ void App::buildSnes(void) {
 	std::vector<glm::vec3> vertices;
 	glm::mat4 model(1.0f);
 	int counter = 0;
-	glm::vec3 color(1.0f);
 	float final_scale = 0.10f;
 
-	static const glm::vec3 base_color(0.7f);
-	static const glm::vec3 power_color(0.45f, 0.25f, 0.86f);
-	static const glm::vec3 reset_color(0.5f);
+	const glm::vec3 base_color(0.7f);
+	const glm::vec3 power_color(0.45f, 0.25f, 0.86f);
+	const glm::vec3 reset_color(0.5f);
 
 	{
 		model = glm::mat4(1.0f);
@@ -194,7 +180,7 @@ void App::buildSnes(void) {
 	for(int i = 0; i < 2; i++) {
 		model = glm::mat4(1.0f);
 
-		model = glm::translate(model, glm::vec3(4.0f + i * 14.0f, 0.0f, -1.0f));
+		model = glm::translate(model, glm::vec3(4.0f + i * 16.0f, 0.0f, -1.0f));
 		model = glm::scale(model, glm::vec3(8.0f, 9.0f, 25.0f));
 
 		Builder::addCube(vertices, model);
@@ -202,7 +188,7 @@ void App::buildSnes(void) {
 
 		model = glm::mat4(1.0f);
 
-		model = glm::translate(model, glm::vec3(3.0f + i * 14.0f, 8.0f, 12.0f));
+		model = glm::translate(model, glm::vec3(3.0f + i * 16.0f, 8.0f, 12.0f));
 		model = glm::scale(model, glm::vec3(10.0f, 1.8f, 2.0f));
 
 		Builder::addCube(vertices, model);
@@ -224,4 +210,117 @@ void App::buildSnes(void) {
 	}
 
 	snes.object = std::make_unique<Object3d>(vertices);
+}
+
+void App::buildController(void) {
+	std::vector<glm::vec3> vertices;
+
+	glm::mat4 model(1.0f);
+	glm::vec3 color(0.4f, 0.2f, 0.1f);
+	int counter = 0;
+
+	float final_scale = 0.20f;
+	const glm::vec3 base_color(0.7f);
+
+	{
+		model = glm::mat4(1.0f);
+
+		model = glm::scale(model, glm::vec3(16.0f, 16.0f, 4.0f));
+
+		Builder::addCylinder(vertices, model);
+		controller.addCylinderShading(counter, base_color);
+	}
+
+	{
+		model = glm::mat4(1.0f);
+
+		model = glm::translate(model, glm::vec3(8.0f, 6.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(24.0f, 10.0f, 4.0f));
+
+		Builder::addCube(vertices, model);
+		controller.addCubeShading(counter, base_color);
+	}
+
+	{
+		model = glm::mat4(1.0f);
+
+		model = glm::translate(model, glm::vec3(24.0f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(16.0f, 16.0f, 4.0f));
+
+		Builder::addCylinder(vertices, model);
+		controller.addCylinderShading(counter, base_color);
+	}
+
+	{
+		model = glm::mat4(1.0f);
+
+		model = glm::translate(model, glm::vec3(4.0f, 7.0f, 4.0f));
+		model = glm::scale(model, glm::vec3(8.0f, 2.0f, 2.0f));
+
+		Builder::addCube(vertices, model);
+		controller.addCubeShading(counter, glm::vec3(0.1f));
+
+		model = glm::mat4(1.0f);
+
+		model = glm::translate(model, glm::vec3(7.0f, 4.0f, 4.0f));
+		model = glm::scale(model, glm::vec3(2.0f, 8.0f, 2.0f));
+
+		Builder::addCube(vertices, model);
+		controller.addCubeShading(counter, glm::vec3(0.1f));
+	}
+
+	{
+		model = glm::mat4(1.0f);
+
+		model = glm::translate(model, glm::vec3(34.0f, 6.0f, 4.0f));
+		model = glm::scale(model, glm::vec3(3.0f, 3.0f, 1.5f));
+
+		Builder::addCylinder(vertices, model);
+		controller.addCylinderShading(counter, glm::vec3(1.0f, 0.0f, 0.0f));
+
+		model = glm::mat4(1.0f);
+
+		model = glm::translate(model, glm::vec3(28.0f, 6.0f, 4.0f));
+		model = glm::scale(model, glm::vec3(3.0f, 3.0f, 1.5f));
+
+		Builder::addCylinder(vertices, model);
+		controller.addCylinderShading(counter, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		model = glm::mat4(1.0f);
+
+		model = glm::translate(model, glm::vec3(31.0f, 9.0f, 4.0f));
+		model = glm::scale(model, glm::vec3(3.0f, 3.0f, 1.5f));
+
+		Builder::addCylinder(vertices, model);
+		controller.addCylinderShading(counter, glm::vec3(0.0f, 0.0f, 1.0f));
+
+		model = glm::mat4(1.0f);
+
+		model = glm::translate(model, glm::vec3(31.0f, 3.0f, 4.0f));
+		model = glm::scale(model, glm::vec3(3.0f, 3.0f, 1.5f));
+
+		Builder::addCylinder(vertices, model);
+		controller.addCylinderShading(counter, glm::vec3(1.0f, 1.0f, 0.0f));
+	}
+
+	for(int i = 0; i < 2; i++) {
+		model = glm::mat4(1.0f);
+
+		model = glm::translate(model, glm::vec3(16.0f + i * 5.0f, 10.0f, 4.0f));
+		/*
+		model = glm::translate(model, glm::vec3(+0.5f));
+		model = glm::rotate(model, 0.5f, glm::vec3(0.0f, 0.0f, 1.0f));
+		model = glm::translate(model, glm::vec3(-0.5f));
+		*/
+		model = glm::scale(model, glm::vec3(3.0f, 1.0f, 2.0f));
+
+		Builder::addCube(vertices, model);
+		controller.addCubeShading(counter, glm::vec3(0.1f));
+	}
+
+	for(auto& vertex : vertices) {
+		vertex *= final_scale;
+	}
+
+	controller.object = std::make_unique<Object3d>(vertices);
 }

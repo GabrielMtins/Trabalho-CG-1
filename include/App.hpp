@@ -24,7 +24,7 @@ class App {
 		void build(void);
 		void buildTable(void);
 		void buildSnes(void);
-
+		void buildController(void);
 
 		GLFWwindow *window = NULL;
 
@@ -33,6 +33,7 @@ class App {
 
 		ObjectHandler table;
 		ObjectHandler snes;
+		ObjectHandler controller;
 };
 
 #endif
