@@ -1,9 +1,13 @@
 #include "App.hpp"
 
 int main(void) {
-	App app;
+	App *app = new App();
 
-	app.run();
+	app->run();
+
+	delete app;
+
+	glfwTerminate();
 
 	return 0;
 }
