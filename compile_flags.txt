@@ -1,3 +1,4 @@
 -I./include
 -I./external/glad/include
+-I./external/glm
 -std=c++17

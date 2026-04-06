@@ -30,7 +30,7 @@ Object3d::Object3d(const std::vector<glm::vec3> vertices) {
 
 void Object3d::render(void) {
 	glBindVertexArray(vao);
-	glDrawArrays(GL_TRIANGLES, 0, num_vertices);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, num_vertices);
 }
 
 Object3d::~Object3d(void) {

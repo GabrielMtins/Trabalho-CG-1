@@ -1,4 +1,5 @@
 #include "App.hpp"
+#include "Builder.hpp"
 
 #include <cstdio>
 #include <cstdlib>
@@ -6,20 +7,40 @@
 #include <vector>
 
 #include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
 
-
-static const char *vertex_shader_src = "#version 330 core\n"
+static const char *vertex_shader_2d_src = "#version 330 core\n"
     "layout (location = 0) in vec3 aPos;\n"
     "void main()\n"
     "{\n"
     "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
     "}\0";
 
-static const char *fragment_shader_src = "#version 330 core\n"
+static const char *fragment_shader_2d_src = "#version 330 core\n"
     "out vec4 FragColor;\n"
     "void main()\n"
     "{\n"
     "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+    "}\n\0";
+
+static const char *vertex_shader_src = "#version 330 core\n"
+    "layout (location = 0) in vec3 a_position;\n"
+    "uniform mat4 u_model;"
+    "uniform mat4 u_view;"
+    "uniform mat4 u_projection;"
+    "void main()\n"
+    "{\n"
+    "   mat4 mvp = projection * view * model;\n"
+    "   gl_Position = mvp * vec4(a_position, 1.0f);\n"
+    "}\0";
+
+static const char *fragment_shader_src = "#version 330 core\n"
+    "out vec4 FragColor;\n"
+	"uniform vec3 u_color;"
+    "void main()\n"
+    "{\n"
+    "   FragColor = vec4(u_color, 1.0f);\n"
     "}\n\0";
 
 static const std::vector<glm::vec3> triangle_vertices = {
@@ -53,7 +74,13 @@ App::App(void) {
 
 	glViewport(0, 0, 800, 600);
 
-	simple_triangle = std::make_unique<Object3d>(triangle_vertices);
+	std::vector<glm::vec3> vertices;
+	glm::mat4 model(1.0f);
+	model = glm::scale(model, glm::vec3(0.5f));
+
+	Builder::addCylinder(vertices, model);
+
+	simple_triangle = std::make_unique<Object3d>(vertices);
 	main_shader = std::make_unique<Shader>(vertex_shader_src, fragment_shader_src);
 }
 

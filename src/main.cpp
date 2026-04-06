@@ -1,11 +1,11 @@
 #include "App.hpp"
 
 int main(void) {
-	App *app = new App();
+	std::unique_ptr<App> app;
+
+	app = std::make_unique<App>();
 
 	app->run();
-
-	delete app;
 
 	glfwTerminate();
 
