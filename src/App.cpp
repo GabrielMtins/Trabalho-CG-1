@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 
+#include <array>
 #include <vector>
 
 #include "glm/glm.hpp"
@@ -41,7 +42,7 @@ App::App(void) {
 
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	window = glfwCreateWindow(800, 600, "Trabalho", NULL, NULL);
+	window = glfwCreateWindow(1200, 800, "Trabalho", NULL, NULL);
 
 	if(window == NULL) {
 		glfwTerminate();
@@ -56,17 +57,10 @@ App::App(void) {
 		exit(-1);
 	}
 
-	glViewport(0, 0, 800, 600);
+	glViewport(0, 0, 1200, 800);
 	// Habilita o teste de profundidade para que objetos mais próximos cubram os mais distantes
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
-
-	std::vector<glm::vec3> vertices;
-	glm::mat4 model(1.0f);
-	model = glm::scale(model, glm::vec3(0.5f));
-
-	//Builder::addCube(vertices, model);
-	Builder::addCylinder(vertices, model);
 
 	// Compila os shaders
 	main_shader = std::make_unique<Shader>(vertex_shader_src, fragment_shader_src);
@@ -89,23 +83,21 @@ void App::loop(void) {
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glm::mat4 model(1.0f);
-	glm::mat4 view(1.0f);
-	
-	// Afasta a câmera da origem
-	view = glm::translate(view, glm::vec3(-4.0f, -2.9f, -12.0f));
-	view = glm::rotate(view, 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+	updateScene();
 
 	// Envia as matrizes de transformação para o shader
-	main_shader->setUniformMat4("u_model", model);
 	main_shader->setUniformMat4("u_view", view);
-	main_shader->setUniformMat4("u_projection", glm::perspective(glm::radians(45.0f), 1.33f, 0.01f, 100.0f));
-
+	main_shader->setUniformMat4("u_projection", projection);
 	main_shader->use();
 	
 	// Renderiza o controle
+	table.render(*main_shader);
+	snes.render(*main_shader);
 	controller.render(*main_shader);
+	monitor.render(*main_shader);
+	pacman.render(*main_shader);
 
+	logic.processInput(window);
 	glfwSwapBuffers(window);
 	glfwPollEvents();
 }
@@ -114,6 +106,9 @@ void App::build(void) {
 	buildTable();
 	buildSnes();
 	buildController();
+	buildMonitor();
+	buildPacman();
+	buildScene();
 }
 
 // Constrói a geometria da mesa
@@ -124,8 +119,8 @@ void App::buildTable(void) {
 	glm::vec3 color(0.4f, 0.2f, 0.1f);
 	int counter = 0;
 
-	const float table_width = 10.0f;
-	const float table_height = 4.0f;
+	const float table_width = 12.0f;
+	const float table_height = 8.0f;
 	const float table_thickness = 0.2f;
 	const float table_foot_thickness = 0.2f;
 	const float table_foot_height = 6.0f;
@@ -160,7 +155,7 @@ void App::buildSnes(void) {
 	std::vector<glm::vec3> vertices;
 	glm::mat4 model(1.0f);
 	int counter = 0;
-	float final_scale = 0.10f;
+	const float final_scale = 1.0f / 48.0f;
 
 	const glm::vec3 base_color(0.7f);
 	const glm::vec3 power_color(0.45f, 0.25f, 0.86f);
@@ -194,7 +189,7 @@ void App::buildSnes(void) {
 		model = glm::scale(model, glm::vec3(8.0f, 9.0f, 25.0f));
 
 		Builder::addCube(vertices, model);
-		snes.addCubeShading(counter, base_color);
+		snes.addCubeShading(counter, glm::vec3(0.6f));
 
 		model = glm::mat4(1.0f);
 
@@ -229,10 +224,9 @@ void App::buildController(void) {
 	std::vector<glm::vec3> vertices;
 
 	glm::mat4 model(1.0f);
-	glm::vec3 color(0.4f, 0.2f, 0.1f);
 	int counter = 0;
 
-	float final_scale = 0.20f;
+	const float final_scale = 1.0f / 40.0f;
 	const glm::vec3 base_color(0.7f);
 
 	// Lado esquerdo
@@ -326,11 +320,6 @@ void App::buildController(void) {
 		model = glm::mat4(1.0f);
 
 		model = glm::translate(model, glm::vec3(16.0f + i * 5.0f, 10.0f, 4.0f));
-		/*
-		model = glm::translate(model, glm::vec3(+0.5f));
-		model = glm::rotate(model, 0.5f, glm::vec3(0.0f, 0.0f, 1.0f));
-		model = glm::translate(model, glm::vec3(-0.5f));
-		*/
 		model = glm::scale(model, glm::vec3(3.0f, 1.0f, 2.0f));
 
 		Builder::addCube(vertices, model);
@@ -342,4 +331,187 @@ void App::buildController(void) {
 	}
 
 	controller.object = std::make_unique<Object3d>(vertices);
+}
+
+void App::buildMonitor(void) {
+	std::vector<glm::vec3> vertices;
+
+	glm::mat4 model(1.0f);
+	int counter = 0;
+
+	const float final_scale = 1.0f / 36.0f;
+	const glm::vec3 base_color(0.95f, 0.90f, 0.76f);
+
+	const std::array<glm::vec3, 4> inner_vertices = {
+		glm::vec3(4.0f,  4.0f, 0.0f),
+		glm::vec3(32.0f, 4.0f, 0.0f),
+		glm::vec3(32.0f, 28.0f, 0.0f),
+		glm::vec3(4.0f,  28.0f, 0.0f),
+	};
+
+	const std::array<glm::vec3, 4> outer_vertices = {
+		glm::vec3(6.0f,  6.0f, -16.0f),
+		glm::vec3(30.0f, 6.0f, -16.0f),
+		glm::vec3(30.0f, 26.0f, -16.0f),
+		glm::vec3(6.0f,  26.0f, -16.0f),
+	};
+
+	for(int i = 0; i < 2; i++) {
+		model = glm::mat4(1.0f);
+
+		model = glm::translate(model, glm::vec3(0.0f, 28.0f * i, 0.0f));
+		model = glm::scale(model, glm::vec3(36.0f, 4.0f, 8.0f));
+
+		Builder::addCube(vertices, model);
+		monitor.addCubeShading(counter, base_color);
+	}
+
+	for(int i = 0; i < 2; i++) {
+		model = glm::mat4(1.0f);
+
+		model = glm::translate(model, glm::vec3(0.0f + i * 32.0f, 4.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(4.0f, 24.0f, 8.0f));
+
+		Builder::addCube(vertices, model);
+		monitor.addCubeShading(counter, base_color);
+	}
+
+	{
+		model = glm::mat4(1.0f);
+
+		model = glm::translate(model, glm::vec3(16.0f, -8.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(4.0f, 8.0f, 6.0f));
+
+		Builder::addCube(vertices, model);
+		monitor.addCubeShading(counter, base_color);
+	}
+
+	{
+		model = glm::mat4(1.0f);
+
+		model = glm::translate(model, glm::vec3(8.0f, -12.0f, -6.0f));
+		model = glm::scale(model, glm::vec3(20.0f, 4.0f, 16.0f));
+
+		Builder::addCube(vertices, model);
+		monitor.addCubeShading(counter, base_color);
+	}
+
+	{
+		model = glm::mat4(1.0f);
+
+		model = glm::translate(model, glm::vec3(4.0f, 4.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(28.0f, 24.0f, 6.0f));
+
+		Builder::addCube(vertices, model);
+		monitor.addCubeShading(counter, glm::vec3(0.0f));
+	}
+
+	{
+		Builder::addQuad(vertices, outer_vertices);
+
+		monitor.parts.emplace_back(counter, 6, base_color * 0.8f);
+		counter += 6;
+	}
+
+	for(int i = 0; i < 4; i++) {
+		int first = i;
+		int last = (i + 1) % 4;
+
+		const std::array<glm::vec3, 4> quad_vert = {
+			inner_vertices[first],
+			inner_vertices[last],
+			outer_vertices[last],
+			outer_vertices[first]
+		};
+
+		Builder::addQuad(vertices, quad_vert);
+		monitor.parts.emplace_back(counter, 6, base_color);
+		counter += 6;
+	}
+
+	for(auto& vertex : vertices) {
+		vertex *= final_scale;
+	}
+
+	monitor.object = std::make_unique<Object3d>(vertices);
+}
+
+void App::buildPacman(void) {
+	std::vector<glm::vec3> vertices;
+
+	glm::mat4 model(1.0f);
+	int counter = 0;
+
+	const float final_scale = 1.0f / 8.0f;
+	const glm::vec3 base_color(1.0f, 1.0f, 0.0f);
+
+	/* deslocamento + número de pixels na horizontal de cada faixa
+	 * de pixels */
+	const std::vector<int> pixel_data = {
+		2, 4,
+		1, 6,
+		0, 5,
+		0, 4,
+		0, 3,
+		0, 5,
+		1, 6,
+		2, 4,
+	};
+
+	for(size_t i = 0; i < pixel_data.size(); i++) {
+		model = glm::mat4(1.0f);
+
+		model = glm::translate(model, glm::vec3(pixel_data[i * 2], i, 0.0f));
+		model = glm::scale(model, glm::vec3(pixel_data[i * 2 + 1], 1.0f, 0.1f));
+
+		Builder::addCube(vertices, model);
+	}
+
+	/* 36 * o número de retângulos (paralelepípedos) */
+	pacman.parts.emplace_back(counter, 36 * pixel_data.size() / 2, base_color);
+
+	for(auto& vertex : vertices) {
+		vertex *= final_scale;
+	}
+
+	pacman.object = std::make_unique<Object3d>(vertices);
+}
+
+void App::buildScene(void) {
+	glm::mat4 model;
+	view = glm::mat4(1.0f);
+	
+	// Afasta a câmera da origem
+	view = glm::translate(view, glm::vec3(-6.0f, -3.9f, -16.0f));
+	view = glm::rotate(view, 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+	projection = glm::perspective(glm::radians(45.0f), 1.33f, 0.01f, 100.0f);
+
+	model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(8.0f, 1.5f, 0.9f));
+	model = glm::scale(model, glm::vec3(4.0f));
+	model = glm::rotate(model, -0.3f, glm::vec3(0.0f, 1.0f, 0.0f));
+	monitor.model = model;
+
+	model = glm::translate(model, glm::vec3(0.5f, 0.2f, 0.2f));
+	model = glm::scale(model, glm::vec3(0.25f));
+	pacman.model = model;
+
+	model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(0.0f, 0.0f, -4.0f));
+	table.model = model;
+
+	model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(7.0f, 0.2f, 2.0f));
+	model = glm::scale(model, glm::vec3(4.0f));
+	model = glm::rotate(model, -3.2f, glm::vec3(0.0f, 1.0f, 0.0f));
+	snes.model = model;
+
+	model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(3.0f, 0.2f, 6.0f));
+	model = glm::scale(model, glm::vec3(4.0f));
+	controller.model = model;
+}
+
+void App::updateScene(void) {
+	controller.model = logic.controller_model;
 }
