@@ -33,6 +33,11 @@
  *  No monitor, há um objeto que é um Pacman 2d, composto somente de primitivas, sem utilizar textura.
  *  A pessoa pode apertar um botão do controle para que o Pacman escale no monitor.
  *
+ *  Nota: NÃO foram utilizados efeitos de iluminação (phong shading, directional lighting,
+ *  diffuse, specular, ambient). O projeto meramente utiliza cores por faces definidos
+ *  por uniforms para
+ *  que o volume dos objetos possa ser propriamente visto.
+ *
  *  De interatividade:
  *  - P: mostra a malha ou retorna ao modo normal de visualização.
  *  - Q: aperta o botão do controle e faz o pacman escalar
