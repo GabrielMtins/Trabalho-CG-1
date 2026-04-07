@@ -42,7 +42,7 @@ App::App(void) {
 
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	window = glfwCreateWindow(1200, 800, "Trabalho", NULL, NULL);
+	window = glfwCreateWindow(1200, 900, "Trabalho", NULL, NULL);
 
 	if(window == NULL) {
 		glfwTerminate();
@@ -57,7 +57,7 @@ App::App(void) {
 		exit(-1);
 	}
 
-	glViewport(0, 0, 1200, 800);
+	glViewport(0, 0, 1200, 900);
 	// Habilita o teste de profundidade para que objetos mais próximos cubram os mais distantes
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
@@ -102,8 +102,11 @@ void App::loop(void) {
 	pacman.render(*main_shader);
 	book.render(*main_shader);
 	button.render(*main_shader);
+	scenary.render(*main_shader);
 
+	// a lógica é responsável por processar qualquer input
 	logic.processInput(window, dt);
+	
 	glfwSwapBuffers(window);
 	glfwPollEvents();
 }
@@ -116,6 +119,7 @@ void App::build(void) {
 	buildPacman();
 	buildBook();
 	buildButton();
+	buildScenary();
 	buildScene();
 }
 
@@ -290,17 +294,6 @@ void App::buildController(void) {
 
 	// Botões do controle (A, B, X, Y)
 	{
-		// botão vermelho
-		/*
-		model = glm::mat4(1.0f);
-
-		model = glm::translate(model, glm::vec3(34.0f, 6.0f, 4.0f));
-		model = glm::scale(model, glm::vec3(3.0f, 3.0f, 1.5f));
-
-		Builder::addCylinder(vertices, model);
-		controller.addCylinderShading(counter, glm::vec3(1.0f, 0.0f, 0.0f));
-		*/
-
 		model = glm::mat4(1.0f);
 
 		model = glm::translate(model, glm::vec3(28.0f, 6.0f, 4.0f));
@@ -353,6 +346,8 @@ void App::buildMonitor(void) {
 	const float final_scale = 1.0f / 36.0f;
 	const glm::vec3 base_color(0.95f, 0.90f, 0.76f);
 
+	// vertices internos e externos do monitor, para fazer
+	// o formato trapezóide a partir de quads
 	const std::array<glm::vec3, 4> inner_vertices = {
 		glm::vec3(4.0f,  4.0f, 0.0f),
 		glm::vec3(32.0f, 4.0f, 0.0f),
@@ -367,6 +362,8 @@ void App::buildMonitor(void) {
 		glm::vec3(6.0f,  26.0f, -16.0f),
 	};
 
+	// os dois for abaixo servem para fazer a moldura
+	// do monitor
 	for(int i = 0; i < 2; i++) {
 		model = glm::mat4(1.0f);
 
@@ -387,6 +384,8 @@ void App::buildMonitor(void) {
 		monitor.addCubeShading(counter, base_color);
 	}
 
+	// os dois próximos blocos de código fazem a
+	// base do monitor
 	{
 		model = glm::mat4(1.0f);
 
@@ -407,6 +406,7 @@ void App::buildMonitor(void) {
 		monitor.addCubeShading(counter, base_color);
 	}
 
+	// a tela do monitor
 	{
 		model = glm::mat4(1.0f);
 
@@ -417,6 +417,8 @@ void App::buildMonitor(void) {
 		monitor.addCubeShading(counter, glm::vec3(0.0f));
 	}
 
+	// esse bloco de código faz a face traseira e o trapezóide,
+	// que não são visíveis na cena, só com wireframe
 	{
 		Builder::addQuad(vertices, outer_vertices);
 
@@ -456,8 +458,12 @@ void App::buildPacman(void) {
 	const float final_scale = 1.0f / 8.0f;
 	const glm::vec3 base_color(1.0f, 1.0f, 0.0f);
 
-	/* deslocamento + número de pixels na horizontal de cada faixa
-	 * de pixels */
+	// Para fazer o pacman sem textura, é necessário montá-lo através de primitivas.
+	// Como utilizar um bloco por pixel é algo desnecessário, podemos utilizar faixas
+	// horizontais no lugar disso, utilizando muito menos primitivas.
+	// Os dados a seguir representam:
+	// - deslocamento horizontal a partir do eixo x (esquerda)
+	// - tamanho da faixa de pixels
 	const std::vector<int> pixel_data = {
 		2, 4,
 		1, 6,
@@ -469,6 +475,8 @@ void App::buildPacman(void) {
 		2, 4,
 	};
 
+	// Com os dados acima, é trivial montar uma
+	// figura do estilo pacman
 	for(size_t i = 0; i < pixel_data.size(); i++) {
 		model = glm::mat4(1.0f);
 
@@ -497,6 +505,7 @@ void App::buildBook(void) {
 	const float final_scale = 1.0f / 32.0f;
 	const glm::vec3 base_color(0.76f, 0.44f, 0.25f);
 
+	// Esse e o próximo bloco fazem a capa do livro
 	for(int i = 0; i < 2; i++){
 		model = glm::mat4(1.0f);
 
@@ -517,6 +526,7 @@ void App::buildBook(void) {
 		book.addCubeShading(counter, base_color);
 	}
 
+	// Esse faz as "páginas"
 	{
 		model = glm::mat4(1.0f);
 
@@ -527,6 +537,8 @@ void App::buildBook(void) {
 		book.addCubeShading(counter, glm::vec3(1.0f));
 	}
 
+	// E os blocos restantes fazem a letra "C" que aparece
+	// no livro.
 	for(int i = 0; i < 2; i++) {
 		model = glm::mat4(1.0f);
 
@@ -570,6 +582,9 @@ void App::buildBook(void) {
 	book.object = std::make_unique<Object3d>(vertices);
 }
 
+// Esse daqui é o botão individual do snes, no código ele é
+// tratado como um objeto separado para ter sua própria matriz
+// model.
 void App::buildButton(void) {
 	std::vector<glm::vec3> vertices;
 
@@ -595,6 +610,25 @@ void App::buildButton(void) {
 	button.object = std::make_unique<Object3d>(vertices);
 }
 
+void App::buildScenary(void) {
+	std::vector<glm::vec3> vertices;
+
+	int counter = 0;
+	glm::mat4 model(1.0f);
+
+	{
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(-5.0f, -8.0f, -15.0f));
+		model = glm::scale(model, glm::vec3(40.0f, 40.0f, 40.0f));
+
+		Builder::addCube(vertices, model);
+		scenary.addCubeShading(counter, glm::vec3(1.0f));
+	}
+
+	scenary.object = std::make_unique<Object3d>(vertices);
+}
+
+// Define as matrizes das partes estáticas da cena
 void App::buildScene(void) {
 	glm::mat4 model;
 	view = glm::mat4(1.0f);
@@ -626,6 +660,7 @@ void App::buildScene(void) {
 	snes.model = model;
 }
 
+// Atualiza as matrizes da cena de acordo com o módulo de Lógica
 void App::updateScene(void) {
 	controller.model = logic.controller_model;
 	pacman.model = logic.pacman_model;

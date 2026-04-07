@@ -20,8 +20,10 @@ class App {
 		~App(void);
 
 	private:
+		// game loop
 		void loop(void);
 
+		// funções de construção da cena
 		void build(void);
 		void buildTable(void);
 		void buildSnes(void);
@@ -30,6 +32,7 @@ class App {
 		void buildPacman(void);
 		void buildBook(void);
 		void buildButton(void);
+		void buildScenary(void);
 		void buildScene(void);
 		void updateScene(void);
 
@@ -49,6 +52,8 @@ class App {
 		ObjectHandler pacman;
 		ObjectHandler book;
 		ObjectHandler button;
+
+		ObjectHandler scenary;
 
 		float last_frame = 0.0f;
 		float dt = 0.0f;

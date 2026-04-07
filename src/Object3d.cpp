@@ -44,6 +44,7 @@ void Object3d::renderPart(int first, int count) {
 }
 
 Object3d::~Object3d(void) {
+	// Liberar da memória os objetos
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER_BINDING, 0);
 	glDeleteVertexArrays(1, &vao);
