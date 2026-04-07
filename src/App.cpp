@@ -477,7 +477,7 @@ void App::buildPacman(void) {
 
 	// Com os dados acima, é trivial montar uma
 	// figura do estilo pacman
-	for(size_t i = 0; i < pixel_data.size(); i++) {
+	for(size_t i = 0; i < pixel_data.size() / 2; i++) {
 		model = glm::mat4(1.0f);
 
 		model = glm::translate(model, glm::vec3(pixel_data[i * 2], i, 0.0f));
