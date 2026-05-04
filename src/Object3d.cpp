@@ -15,7 +15,7 @@ Object3d::Object3d(const std::vector<glm::vec3> vertices) {
 			GL_ARRAY_BUFFER,
 			sizeof(glm::vec3) * vertices.size(),
 			vertices.data(),
-			GL_STATIC_DRAW
+			GL_STREAM_DRAW
 			);
 
 	// Explica ao OpenGL como ler o buffer (3 floats x, y, z para cada vértice)
