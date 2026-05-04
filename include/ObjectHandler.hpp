@@ -11,8 +11,9 @@ struct MeshPart {
 	int first = 0;
 	int count = 0;
 	glm::vec3 color;
+	unsigned int texture = 0;
 
-	MeshPart(int first, int count, glm::vec3 color);
+	MeshPart(int first, int count, glm::vec3 color = glm::vec3(1.0f), unsigned int texture = 0);
 };
 
 struct ObjectHandler {

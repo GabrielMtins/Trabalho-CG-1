@@ -25,6 +25,7 @@ class App {
 
 		// funções de construção da cena
 		void build(void);
+		/*
 		void buildTable(void);
 		void buildSnes(void);
 		void buildController(void);
@@ -35,6 +36,7 @@ class App {
 		void buildScenary(void);
 		void buildScene(void);
 		void updateScene(void);
+		*/
 
 		GLFWwindow *window = NULL;
 
@@ -45,6 +47,7 @@ class App {
 
 		Logic logic;
 
+		/*
 		ObjectHandler table;
 		ObjectHandler snes;
 		ObjectHandler controller;
@@ -54,6 +57,7 @@ class App {
 		ObjectHandler button;
 
 		ObjectHandler scenary;
+		*/
 
 		float last_frame = 0.0f;
 		float dt = 0.0f;

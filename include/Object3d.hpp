@@ -6,9 +6,11 @@
 #include "Global.hpp"
 #include "glm/vec3.hpp"
 
+#include "Vertex.hpp"
+
 class Object3d {
 	public:
-		Object3d(const std::vector<glm::vec3> vertices);
+		Object3d(const std::vector<Vertex> vertices);
 
 		void render(void);
 		void renderPart(int first, int count);

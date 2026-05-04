@@ -1,10 +1,11 @@
 #include "ObjectHandler.hpp"
 #include "Builder.hpp"
 
-MeshPart::MeshPart(int first, int count, glm::vec3 color) :
+MeshPart::MeshPart(int first, int count, glm::vec3 color, unsigned int texture) :
 	first(first),
 	count(count),
-	color(color)
+	color(color),
+	texture(texture)
 {
 }
 
@@ -39,11 +40,15 @@ void ObjectHandler::addCylinderShading(int& counter, const glm::vec3& color) {
 
 // Renderiza todas as partes registradas aplicando a cor certa via uniform antes do draw call
 void ObjectHandler::render(Shader& shader) {
+	glActiveTexture(GL_TEXTURE0);
+
+	shader.setUniformInt("u_texture", 0);
 	shader.setUniformMat4("u_model", model);
 
 	shader.use();
 
 	for(const auto& part : parts) {
+		glBindTexture(GL_TEXTURE_2D, part.texture);
 		shader.setUniformVec3("u_color", part.color);
 		object->renderPart(part.first, part.count);
 	}

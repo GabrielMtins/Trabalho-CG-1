@@ -1,7 +1,8 @@
 #include "Object3d.hpp"
+#include <cstddef>
 
 // Construtor: aloca as estruturas do OpenGL e envia os vértices para a GPU
-Object3d::Object3d(const std::vector<glm::vec3> vertices) {
+Object3d::Object3d(const std::vector<Vertex> vertices) {
 	num_vertices = vertices.size();
 
 	glGenVertexArrays(1, &vao);
@@ -13,7 +14,7 @@ Object3d::Object3d(const std::vector<glm::vec3> vertices) {
 	// Envia o array de posições
 	glBufferData(
 			GL_ARRAY_BUFFER,
-			sizeof(glm::vec3) * vertices.size(),
+			sizeof(Vertex) * vertices.size(),
 			vertices.data(),
 			GL_STREAM_DRAW
 			);
@@ -25,10 +26,43 @@ Object3d::Object3d(const std::vector<glm::vec3> vertices) {
 			GL_FLOAT,
 			GL_FALSE,
 			3 * sizeof(float),
-			(void *) 0
+			(void *) offsetof(Vertex, pos)
 			);
 
 	glEnableVertexAttribArray(0);
+
+	glVertexAttribPointer(
+			1,
+			3,
+			GL_FLOAT,
+			GL_FALSE,
+			3 * sizeof(float),
+			(void *) offsetof(Vertex, normal)
+			);
+
+	glEnableVertexAttribArray(1);
+
+	glVertexAttribPointer(
+			2,
+			3,
+			GL_FLOAT,
+			GL_FALSE,
+			3 * sizeof(float),
+			(void *) offsetof(Vertex, color)
+			);
+
+	glEnableVertexAttribArray(2);
+
+	glVertexAttribPointer(
+			3,
+			2,
+			GL_FLOAT,
+			GL_FALSE,
+			2 * sizeof(float),
+			(void *) offsetof(Vertex, uv)
+			);
+
+	glEnableVertexAttribArray(3);
 }
 
 // Desenha a malha completa
