@@ -5,8 +5,6 @@
 #include <iostream>
 #include <string>
 
-static const std::string mtl_base_path = "obj/";
-
 struct FaceIndex {
 	int v_idx; // Índice do vértice
 	int vt_idx; // Índice da coordenada de textura (opcional)
@@ -15,6 +13,7 @@ struct FaceIndex {
 
 std::unique_ptr<ObjectHandler> ObjLoader::load(const std::string& path) {
 	auto handler = std::make_unique<ObjectHandler>();
+	basepath = extractBasePath(path);
 	size_t first = 0, count = 0;
 
 	vertices.clear();
@@ -40,14 +39,14 @@ std::unique_ptr<ObjectHandler> ObjLoader::load(const std::string& path) {
 		if(prefix == "mtllib") {
 			std::string mtl_path;
 			ss >> mtl_path;
-			loadMtl(mtl_base_path + mtl_path);
+			loadMtl(basepath + mtl_path);
 		}
 		else if(prefix == "usemtl") {
 			std::string mtl_name;
 			ss >> mtl_name;
 
 			if(count != 0 && !current_mtl.empty()) {
-				handler->parts.emplace_back(first, count, glm::vec3(1.0f), texture_loaded.at(current_mtl));
+				handler->parts.emplace_back(first, count, glm::vec3(1.0f), texture_loaded[current_mtl]);
 				first = first + count;
 				count = 0;
 			}
@@ -110,26 +109,28 @@ std::unique_ptr<ObjectHandler> ObjLoader::load(const std::string& path) {
 			}
 
 			if (face.size() > 3) {
-                for (size_t i = 1; i < face.size() - 1; ++i) {
+				for (size_t i = 1; i < face.size() - 1; ++i) {
 					pushToVertexBuffer(face[0].v_idx, face[0].vt_idx, face[0].vn_idx);
 					pushToVertexBuffer(face[i].v_idx, face[i].vt_idx, face[i].vn_idx);
 					pushToVertexBuffer(face[i + 1].v_idx, face[i + 1].vt_idx, face[i + 1].vn_idx);
 					count += 3;
-                }
-            } else {
+				}
+			} else {
 				for(const auto& i : face) {
 					pushToVertexBuffer(i.v_idx, i.vt_idx, i.vn_idx);
 				}
 				count += 3;
-            }
+			}
 		}
 	}
 
 	file.close();
 
 	if(count != 0) {
-		handler->parts.emplace_back(first, count, glm::vec3(1.0f), 0);
+		handler->parts.emplace_back(first, count, glm::vec3(1.0f), current_mtl.empty() ? 0 : texture_loaded.at(current_mtl));
 	}
+
+	handler->object = std::make_unique<Object3d>(vertices);
 
 	return handler;
 }
@@ -183,11 +184,25 @@ void ObjLoader::loadMtl(const std::string& path) {
 			std::string text_path;
 			ss >> text_path;
 
-			texture_loaded[current_mtl] = Texture::load(text_path);
+			texture_loaded[current_mtl] = Texture::load(basepath + text_path);
+			//texture_loaded[current_mtl] = 0;
 		}
 		else if(prefix == "mtllib") {
 			std::string mtl_path;
 			ss >> mtl_path;
 		}
 	}
+}
+
+std::string ObjLoader::extractBasePath(const std::string& filepath) {
+    // Encontra a última barra ('/' ou '\')
+    size_t pos = filepath.find_last_of("/\\");
+    
+    if (pos == std::string::npos) {
+        // Não encontrou barra, retorna string vazia ou "./"
+        return "";
+    }
+    
+    // Retorna do início até a última barra (inclusive)
+    return filepath.substr(0, pos + 1);
 }

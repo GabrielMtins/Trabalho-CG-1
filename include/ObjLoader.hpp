@@ -14,6 +14,7 @@ class ObjLoader {
 	private:
 		void pushToVertexBuffer(int v, int vt, int vn);
 		void loadMtl(const std::string& path);
+		std::string extractBasePath(const std::string& path);
 
 		std::vector<glm::vec3> vs;
 		std::vector<glm::vec2> uvs;
@@ -21,6 +22,7 @@ class ObjLoader {
 
 		std::vector<Vertex> vertices;
 		std::unordered_map<std::string, unsigned int> texture_loaded;
+		std::string basepath;
 };
 
 #endif

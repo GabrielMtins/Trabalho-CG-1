@@ -48,8 +48,9 @@ void ObjectHandler::render(Shader& shader) {
 	shader.use();
 
 	for(const auto& part : parts) {
+		if(part.texture == 0) continue;
+
 		glBindTexture(GL_TEXTURE_2D, part.texture);
-		shader.setUniformVec3("u_color", part.color);
 		object->renderPart(part.first, part.count);
 	}
 }

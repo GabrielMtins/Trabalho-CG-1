@@ -67,7 +67,7 @@ void Shader::setUniformInt(const std::string& name, int i) {
 	location = getUniformLocation(name);
 
 	if(location < 0) {
-		printf("Error: Não há o uniform de nome: %s", name.c_str());
+		printf("Error: Não há o uniform de nome: %s\n", name.c_str());
 	}
 
 	use();
@@ -84,7 +84,7 @@ void Shader::setUniformVec3(const std::string& name, const glm::vec3& pos) {
 	location = getUniformLocation(name);
 
 	if(location < 0) {
-		printf("Error: Não há o uniform de nome: %s", name.c_str());
+		printf("Error: Não há o uniform de nome: %s\n", name.c_str());
 	}
 
 	use();

@@ -8,14 +8,13 @@
 Logic::Logic(void) {
 	old_p_state = GLFW_PRESS;
 	gl_fill_mode = GL_FILL;
-	controller_rotation = 0.0f;
-
-	pacman_scaling = 1.0f;
 
 	setUpMatrices();
 }
 
 void Logic::processInput(GLFWwindow *window, float dt) {
+	static const float max_delta_pos = 0.025f * dt;
+	glm::vec3 wish_dir = glm::vec3(0.0f);
 	// lógica para exibir wireframes sem usar callback
 	{
 		int new_p_state;
@@ -30,97 +29,159 @@ void Logic::processInput(GLFWwindow *window, float dt) {
 		old_p_state = new_p_state;
 	}
 
-	// computar rotação do controle segundo delta time
+	// alterar a direcao desejada
 	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		controller_rotation -= 1.5f * dt;
+		wish_dir.x += 1.0f;
 	}
 
 	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		controller_rotation += 1.5f * dt;
+		wish_dir.x -= 1.0f;
 	}
 
-	// computar o movimento do botão e a escala do pacman
-	if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-		pacman_scaling += 3.0f * dt;
-		button_penetration += 8.0f * dt;
-	} else {
-		button_penetration -= 16.0f * dt;
+	if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+		wish_dir.z += 1.0f;
 	}
 
-	// computar a posição do livro
-	if(glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
-		book_position.z -= 2.0f * dt;
+	if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		wish_dir.z -= 1.0f;
+	}
+
+	if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+		wish_dir.y -= 1.0f;
+	}
+
+	if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+		wish_dir.y += 1.0f;
+	}
+
+	// calcular rotacao do livro
+	if(glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
+		book_rotation -= 1.0f * dt;
 	}
 
 	if(glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
-		book_position.z += 2.0f * dt;
+		book_rotation += 1.0f * dt;
 	}
 
-	if(glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
-		book_position.x -= 2.0f * dt;
+	// calcular deslocamento da cadeira
+	if(glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+		chair_offset += 1.0f * dt;
 	}
 
-	if(glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
-		book_position.x += 2.0f * dt;
+	if(glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+		chair_offset -= 1.0f * dt;
 	}
 
-	// limites do livro
-	if(book_position.x < 0.0f) book_position.x = 0.0f;
-	if(book_position.x > 0.3f) book_position.x = 0.3f;
-	if(book_position.z < -0.5f) book_position.z = -0.5f;
-	if(book_position.z > 0.0f) book_position.z = 0.0f;
+	if(chair_offset < 0.0f) chair_offset = 0.0f;
+	if(chair_offset > 1.0f) chair_offset = 1.0f;
 
-	// limites do movimento do botao
-	if(button_penetration < 0.0f) button_penetration = 0.0f;
-	if(button_penetration > 1.0f) button_penetration = 1.0f;
+	if(glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {
+		tree_scale += 1.0f * dt;
+	}
 
+	if(glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
+		tree_scale -= 1.0f * dt;
+	}
+
+	if(tree_scale < 0.0f) tree_scale = 0.0f;
+	if(tree_scale > 1.0f) tree_scale = 1.0f;
+
+	camera.pos += glm::vec3(glm::rotate(glm::mat4(1.0f), -camera.yaw, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(wish_dir, 1.0f)) * max_delta_pos;
+
+	// definir limites do player no mundo
+	if(camera.pos.y > -1.5f) {
+		camera.pos.y = -1.5f;
+	}
+
+	if(camera.pos.y < -15.0f) {
+		camera.pos.y = -15.0f;
+	}
+
+	if(camera.pos.x < -40.0f) camera.pos.x = -40.0f;
+	if(camera.pos.z < -40.0f) camera.pos.z = -40.0f;
+
+	if(camera.pos.x > +40.0f) camera.pos.x = +40.0f;
+	if(camera.pos.z > +40.0f) camera.pos.z = +40.0f;
+
+	processMouseMovement(window, dt);
 	computeMatrices();
 }
 
-void Logic::setUpMatrices(void) {
-	glm::mat4 model;
+void Logic::processMouseMovement(GLFWwindow *window, float dt) {
+	static const float sensitivity = 0.001f;
+	float centerX = 1200.0f / 2.0f;
+	float centerY = 900.0f / 2.0f;
 
-	model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(6.0f, 0.5f, 7.0f));
-	model = glm::scale(model, glm::vec3(4.0f));
+	// 2. Pega a posição atual do cursor
+	double xpos, ypos;
+	glfwGetCursorPos(window, &xpos, &ypos);
 
-	model = glm::translate(model, glm::vec3(0.0f, 0.5f, 0.0f));
-	model = glm::rotate(model, -0.2f, glm::vec3(1.0f, 0.0f, 0.0f));
-	model = glm::translate(model, glm::vec3(0.0f, -0.5f, 0.0f));
+	// 3. Calcula o deslocamento
+	float xoffset = float(xpos) - centerX;
+	float yoffset = centerY - float(ypos); 
 
-	base_controller_model = model;
+	glfwSetCursorPos(window, centerX, centerY);
 
-	model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(0.0f, 0.2f, 0.0f));
-	model = glm::scale(model, glm::vec3(4.0f));
+	// 5. Aplica a sensibilidade ao movimento
+	xoffset *= sensitivity;
+	yoffset *= sensitivity;
 
-	base_book_model = model;
+	// 6. Atualiza os ângulos
+	camera.yaw += xoffset;
+	camera.pitch += yoffset;
+
+	// 7. Trava o pitch para não virar a câmera de ponta cabeça
+	if (camera.pitch > glm::radians(90.0f)) {
+		camera.pitch = glm::radians(90.0f);
+	}
+	if (camera.pitch < -glm::radians(90.0f)) {
+		camera.pitch = -glm::radians(90.0f);
+	}
 }
 
+// definir as matrizes de base
+void Logic::setUpMatrices(void) {
+	camera.pos.y = -2.0f;
+
+	{
+		glm::mat4 model(1.0f);
+		model = glm::translate(model, glm::vec3(+0.8f, 1.05f, -3.3f));
+		model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(2.0f));
+		base_book_matrix = model;
+	}
+
+	{
+		glm::mat4 model(1.0f);
+	
+		model = glm::translate(model, glm::vec3(+0.8f, 0.0f, -0.3f));
+		model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(1.3f));
+		base_chair_matrix = model;
+	}
+
+	{
+		glm::mat4 model(1.0f);
+
+		model = glm::scale(model, glm::vec3(1.5f));
+
+		base_tree_matrix = model;
+	}
+
+}
+
+// computar as matrizes de acordo com suas atualizacoes
 void Logic::computeMatrices(void) {
-	controller_model = base_controller_model;
+	view = glm::mat4(1.0f);
 
-	// rotação do controle no eixo Y
-	controller_model = glm::translate(controller_model, glm::vec3(0.5f, 0.0f, +0.1f));
-	controller_model = glm::rotate(controller_model, controller_rotation, glm::vec3(0.0f, 1.0f, 0.0f));
-	controller_model = glm::translate(controller_model, glm::vec3(-0.5f, 0.0f, -0.1f));
+	view = glm::rotate(view, -camera.pitch, glm::vec3(1.0f, 0.0f, 0.0f));
+	view = glm::rotate(view, camera.yaw, glm::vec3(0.0f, 1.0f, 0.0f));
+	view = glm::translate(view, camera.pos);
 
-	pacman_model = base_pacman_model;
+	book_matrix = glm::rotate(base_book_matrix, book_rotation, glm::vec3(0.0f, 1.0f, 0.0f));
+	chair_matrix = glm::translate(base_chair_matrix, glm::vec3(0.0f, 0.0f, chair_offset * 1.5f));
 
-	pacman_model = glm::translate(pacman_model, glm::vec3(0.5f, 0.5f, 0.0f));
-	// como há apenas um botão que se mexe, resolvemos fazer
-	// uma função seno periódica para que a escala continuasse.
-	// ela tem intervalo de 0.5 a 1.5
-	pacman_model = glm::scale(pacman_model, glm::vec3((sinf(pacman_scaling) + 1.0f) / 2.0f + 0.5f));
-	pacman_model = glm::translate(pacman_model, glm::vec3(-0.5f, -0.5f, 0.0f));
-
-	// translação do livro
-	book_model = base_book_model;
-	book_model = glm::translate(book_model, book_position);
-
-	// translação do botão
-	// note que ela usa como base a própria matriz model do botão
-	// isso serve para facilitar as rotações
-	button_model = controller_model;
-	button_model = glm::translate(button_model, glm::vec3(0.0f, 0.0f, -button_penetration * 0.03f));
+	tree_matrix = base_tree_matrix;
+	tree_matrix = glm::translate(tree_matrix, glm::vec3(+6.8f, 0.0f, -0.3f));
+	tree_matrix = glm::scale(tree_matrix, glm::vec3(tree_scale * 2.0f + 1.0f));
 }

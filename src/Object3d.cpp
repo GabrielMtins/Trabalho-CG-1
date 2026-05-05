@@ -25,7 +25,7 @@ Object3d::Object3d(const std::vector<Vertex> vertices) {
 			3,
 			GL_FLOAT,
 			GL_FALSE,
-			3 * sizeof(float),
+			sizeof(Vertex),
 			(void *) offsetof(Vertex, pos)
 			);
 
@@ -36,7 +36,7 @@ Object3d::Object3d(const std::vector<Vertex> vertices) {
 			3,
 			GL_FLOAT,
 			GL_FALSE,
-			3 * sizeof(float),
+			sizeof(Vertex),
 			(void *) offsetof(Vertex, normal)
 			);
 
@@ -47,7 +47,7 @@ Object3d::Object3d(const std::vector<Vertex> vertices) {
 			3,
 			GL_FLOAT,
 			GL_FALSE,
-			3 * sizeof(float),
+			sizeof(Vertex),
 			(void *) offsetof(Vertex, color)
 			);
 
@@ -58,7 +58,7 @@ Object3d::Object3d(const std::vector<Vertex> vertices) {
 			2,
 			GL_FLOAT,
 			GL_FALSE,
-			2 * sizeof(float),
+			sizeof(Vertex),
 			(void *) offsetof(Vertex, uv)
 			);
 
