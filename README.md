@@ -1,6 +1,6 @@
-# Trabalho 2 da disciplina SCC0250 - Computação Gráfica
+# Trabalho 3 da disciplina SCC0250 - Computação Gráfica
 
-Trabalho 2 da disciplina SCC0250 - Computação Gráfica
+Trabalho 3 da disciplina SCC0250 - Computação Gráfica
 Feito pelos alunos:
 - Gabriel Martins Monteiro   - N°USP: 14572099
 - Hélio Márcio Cabral Santos - N°USP: 14577862

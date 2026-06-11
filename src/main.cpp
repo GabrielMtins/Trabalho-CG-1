@@ -1,7 +1,7 @@
 #include "App.hpp"
 
 /*
- * Trabalho 2 da disciplina SCC0250 - Computação Gráfica
+ * Trabalho 3 da disciplina SCC0250 - Computação Gráfica
  * Feito pelos alunos:
  * Gabriel Martins Monteiro   - N°USP: 14572099
  * Hélio Márcio Cabral Santos - N°USP: 14577862
@@ -11,6 +11,11 @@
  *  - U e I: escala a árvore
  *  - J e K: rotaciona o livro
  *  - Seta para cima e para baixo: desloca a cadeira
+ *  - 1, 2, 3, 4 - ativa ou desativa luzes
+ *  - t, y - translação da vela externa
+ *  - z, x - luz ambinete
+ *  - c, v - luz difusa
+ *  - b, n - luz especular
  *  Não foram utilizadas texturas nem movimentos de câmera.
  *
  *  Sobre a organização do código:
