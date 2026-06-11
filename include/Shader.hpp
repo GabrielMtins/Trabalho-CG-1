@@ -15,6 +15,7 @@ class Shader {
 		~Shader(void);
 
 		void setUniformInt(const std::string& name, int i);
+		void setUniformFloat(const std::string& name, float i);
 		void setUniformVec3(const std::string& name, const glm::vec3& pos);
 		void setUniformMat4(const std::string& name, const glm::mat4& mat);
 

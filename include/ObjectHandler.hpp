@@ -21,6 +21,12 @@ struct ObjectHandler {
 	std::vector<MeshPart> parts;
 	glm::mat4 model = glm::mat4(1.0f);
 
+	glm::vec3 ambient = glm::vec3(0.2f);
+	glm::vec3 diffuse = glm::vec3(1.0f);
+	glm::vec3 specular = glm::vec3(1.0f);
+	float shineness = 4.0f;
+	float inside = 0.0f;
+
 	void addCubeShading(int& counter, const glm::vec3& color);
 	void addCylinderShading(int& counter, const glm::vec3& color);
 	void render(Shader& shader);

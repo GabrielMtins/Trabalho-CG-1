@@ -16,16 +16,21 @@
 // Código fonte do Vertex Shader (calcula a posição dos vértices na tela)
 static const char *vertex_shader_src = "#version 330 core\n"
 	"layout (location = 0) in vec3 a_position;\n"
+	"layout (location = 1) in vec3 a_normal;\n"
 	"layout (location = 3) in vec2 a_uv;\n"
 	"uniform mat4 u_model;"
 	"uniform mat4 u_view;"
 	"uniform mat4 u_projection;"
 	"out vec2 v_uv;"
+	"out vec3 v_normal;"
+	"out vec3 v_fragpos;"
 	"void main()\n"
 	"{\n"
 	"   mat4 mvp = u_projection * u_view * u_model;\n"
 	"   gl_Position = mvp * vec4(a_position, 1.0f);\n"
 	"   v_uv = a_uv;"
+	"   v_normal = mat3(u_model) * a_normal;"
+	"   v_fragpos = vec3(u_model * vec4(a_position, 1.0));"
 	"}\0";
 
 // Código fonte do Fragment Shader (calcula a cor dos pixels)
@@ -34,11 +39,56 @@ static const char *fragment_shader_src = "#version 330 core\n"
 	"uniform vec3 u_color;\n"
 	"uniform sampler2D u_texture;\n"
 	"in vec2 v_uv;"
+	"in vec3 v_normal;"
+	"in vec3 v_fragpos;"
+	"struct Light {"
+	"   vec3 pos;"
+	"   vec3 color;"
+	"   vec3 intensity;"
+	"};"
+	"struct Sun {"
+	"   vec3 dir;"
+	"   vec3 color;"
+	"   vec3 intensity;" 
+	"};"
+	"uniform Light u_lights[3];"
+	"uniform Sun u_sun;"
+	"uniform float u_inside;"
+	"uniform vec3 u_ambient;"
+	"uniform vec3 u_diffuse;"
+	"uniform vec3 u_specular;"
+	"uniform float u_shineness;"
+	"uniform vec3 u_viewpos;"
+	"uniform float u_ambient_scale;"
+	"uniform float u_diffuse_scale;"
+	"uniform float u_specular_scale;"
+	"vec3 get_full_color(int i){"
+	"   vec3 norm = normalize(v_normal);"
+	"   vec3 light_dir = normalize(u_lights[i].pos - v_fragpos);"
+	"   float diff = max(dot(norm, light_dir), 0.0);"
+	"   vec3 view_dir = normalize(u_viewpos - v_fragpos);"
+	"   vec3 reflect_dir = reflect(-light_dir, norm);"
+	"   float spec = pow(max(dot(view_dir, reflect_dir), 0.0), u_shineness);"
+	"   return u_lights[i].intensity * u_lights[i].color * (diff * u_diffuse * u_diffuse_scale + spec * u_specular * u_specular_scale);"
+	"}"
+	"vec3 get_sun_color(){"
+	"   vec3 norm = normalize(v_normal);"
+	"   float diff = max(dot(norm, u_sun.dir), 0.0);"
+	"   vec3 view_dir = normalize(u_viewpos - v_fragpos);"
+	"   vec3 reflect_dir = reflect(-u_sun.dir, norm);"
+	"   float spec = pow(max(dot(view_dir, reflect_dir), 0.0), u_shineness);"
+	"   return u_sun.color * (diff * u_diffuse * u_diffuse_scale + spec * u_specular * u_specular_scale);"
+	"}"
 	"void main()\n"
 	"{\n"
-	//"   FragColor = vec4(texture(u_texture, v_uv), 1.0f);\n"
-	"   FragColor = texture(u_texture, v_uv);\n"
-	"   if(FragColor.a < 0.9) discard;"
+	"   vec3 ambient_color = vec3(1.0);"
+	"   vec3 final_color = vec3(0.0);"
+	"   final_color += u_ambient * ambient_color * u_ambient_scale;"
+	"   final_color += get_sun_color() * (1.0 - u_inside);"
+	"   final_color += get_full_color(0) * (1.0 - u_inside);"
+	"   final_color += get_full_color(1) * (u_inside);"
+	"   final_color += get_full_color(2) * (u_inside);"
+	"   FragColor = vec4(final_color, 1.0) * texture(u_texture, v_uv);\n"
 	"}\n\0";
 
 static const char *skybox_vs_src = 
@@ -150,7 +200,23 @@ void App::loop(void) {
 	// Envia as matrizes de transformação para o shader
 	main_shader->setUniformMat4("u_view", view);
 	main_shader->setUniformMat4("u_projection", projection);
+	main_shader->setUniformVec3("u_viewpos", logic.getPos());
+	main_shader->setUniformFloat("u_ambient_scale", logic.ambient_scale);
+	main_shader->setUniformFloat("u_diffuse_scale", logic.diffuse_scale);
+	main_shader->setUniformFloat("u_specular_scale", logic.specular_scale);
 	main_shader->use();
+
+	if(logic.candle_working) {
+		main_shader->setUniformVec3("u_lights[1].intensity", glm::vec3(1.0f));
+	} else {
+		main_shader->setUniformVec3("u_lights[1].intensity", glm::vec3(0.0f));
+	}
+
+	if(logic.lantern_working) {
+		main_shader->setUniformVec3("u_lights[2].intensity", glm::vec3(1.0f));
+	} else {
+		main_shader->setUniformVec3("u_lights[2].intensity", glm::vec3(0.0f));
+	}
 
 	renderSkybox();
 	floor_handler->render(*main_shader);
@@ -163,6 +229,10 @@ void App::loop(void) {
 	book_handler->render(*main_shader);
 	bench_handler->render(*main_shader);
 	small_tree_handler->render(*main_shader);
+	candle_handler->render(*main_shader);
+	lantern_handler->render(*main_shader);
+	torch_handler->render(*main_shader);
+
 
 	renderTrees();
 
@@ -206,6 +276,17 @@ void App::updateScene(void) {
 	book_handler->model = logic.book_matrix;
 	chair_handler->model = logic.chair_matrix;
 	small_tree_handler->model = logic.tree_matrix;
+	candle_handler->model = logic.candle_matrix;
+
+	{
+		glm::vec3 pos = glm::vec3(
+				candle_handler->model * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)
+				);
+
+		pos.y += 0.3f;
+
+		main_shader->setUniformVec3("u_lights[0].pos", pos);
+	}
 }
 
 // funcoes de build, basicamente carregamento inicial e setup de matrizes
@@ -221,6 +302,10 @@ void App::build(void) {
 	buildBook();
 	buildBigTree();
 	buildSmallTree();
+	buildCandle();
+	buildLantern();
+	buildTorch();
+	buildLights();
 }
 
 void App::buildSkyboxCube(void) {
@@ -297,6 +382,11 @@ void App::buildSkyboxCube(void) {
 void App::buildHouse(void) {
 	house_handler = obj_loader.load("obj/house3/casa_T2_CG.obj");
 	house_handler->model = glm::mat4(1.0f);
+	house_handler->inside = 1.0f;
+	house_handler->ambient = glm::vec3(0.6f);
+	house_handler->diffuse = glm::vec3(1.0f);
+	house_handler->specular = glm::vec3(0.0f);
+	house_handler->shineness = 32.0f;
 
 	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -305,6 +395,10 @@ void App::buildHouse(void) {
 
 void App::buildGrassFloor(void) {
 	floor_handler = std::make_unique<ObjectHandler>();
+	floor_handler->inside = 0.0f;
+	floor_handler->ambient = glm::vec3(0.2f);
+	floor_handler->diffuse = glm::vec3(0.8f);
+	floor_handler->specular = glm::vec3(0.0f);
 
 	unsigned int tex_floor = Texture::load("obj/grass/grass.png");
 
@@ -319,6 +413,7 @@ void App::buildGrassFloor(void) {
 		i.pos *= 1024.0f;
 		i.uv *= 256.0f;
 		i.pos.y -= 0.001f;
+		i.normal = glm::vec3(0.0f, 1.0f, 0.0f);
 	}
 
 
@@ -335,6 +430,9 @@ void App::buildBed(void) {
 	glm::mat4 model(1.0f);
 
 	bed_handler = obj_loader.load("obj/in/Bed_Twin1.obj");
+	bed_handler->inside = 1.0f;
+	bed_handler->specular = glm::vec3(0.3f);
+	bed_handler->shineness = 4.0f;
 	
 	model = glm::translate(model, glm::vec3(-2.7f, 0.0f, -3.0f));
 	model = glm::scale(model, glm::vec3(1.2f));
@@ -345,6 +443,9 @@ void App::buildChest(void) {
 	glm::mat4 model(1.0f);
 
 	chest_handler = obj_loader.load("obj/in/chest.obj");
+	chest_handler->inside = 1.0f;
+	chest_handler->diffuse = glm::vec3(2.0f);
+	chest_handler->shineness = 64.0f;
 
 	model = glm::translate(model, glm::vec3(-2.8f, 0.0f, -0.3f));
 	model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -357,6 +458,8 @@ void App::buildChair(void) {
 	glm::mat4 model(1.0f);
 
 	chair_handler = obj_loader.load("obj/in/Chair_1.obj");
+	chair_handler->inside = 1.0f;
+	chair_handler->specular = glm::vec3(0.0f);
 
 	model = glm::translate(model, glm::vec3(+0.8f, 0.0f, -0.3f));
 	model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -369,6 +472,10 @@ void App::buildBench(void) {
 	glm::mat4 model(1.0f);
 
 	bench_handler = obj_loader.load("obj/in/Bench.obj");
+	bench_handler->inside = 0.0f;
+	bench_handler->ambient = glm::vec3(0.1f);
+	bench_handler->specular = glm::vec3(0.1f);
+	bench_handler->diffuse = glm::vec3(0.7f);
 
 	model = glm::translate(model, glm::vec3(+6.3f, 0.0f, -0.3f));
 	model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -381,6 +488,10 @@ void App::buildTable(void) {
 	glm::mat4 model(1.0f);
 
 	table_handler = obj_loader.load("obj/in/Table_Large.obj");
+	table_handler->inside = 1.0f;
+	table_handler->ambient = glm::vec3(0.0f);
+	table_handler->diffuse = glm::vec3(1.0f);
+	table_handler->specular = glm::vec3(0.0f);
 
 	model = glm::translate(model, glm::vec3(+0.8f, 0.0f, -3.3f));
 	model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -393,6 +504,7 @@ void App::buildBook(void) {
 	glm::mat4 model(1.0f);
 
 	book_handler = obj_loader.load("obj/in/Book_5.obj");
+	book_handler->inside = 1.0f;
 
 	model = glm::translate(model, glm::vec3(+0.8f, 1.05f, -3.3f));
 	model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -401,10 +513,19 @@ void App::buildBook(void) {
 	book_handler->model = model;
 }
 
+void App::buildLights(void) {
+	main_shader->setUniformVec3("u_sun.dir", glm::vec3(1.0f));
+	main_shader->setUniformVec3("u_sun.color", glm::vec3(1.0f, 1.0f, 1.0f));
+	main_shader->setUniformVec3("u_sun.intensity", glm::vec3(1.0f));
+}
+
 void App::buildBigTree(void) {
 	glm::mat4 model(1.0f);
 
 	big_tree_handler = obj_loader.load("obj/trees/tree1.obj");
+	big_tree_handler->ambient = glm::vec3(0.3f);
+	big_tree_handler->diffuse = glm::vec3(0.5f);
+	big_tree_handler->specular = glm::vec3(0.1f);
 
 	model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	model = glm::scale(model, glm::vec3(5.5f));
@@ -417,6 +538,9 @@ void App::buildSmallTree(void) {
 	glm::mat4 model(1.0f);
 
 	small_tree_handler = obj_loader.load("obj/trees/tree2.obj");
+	small_tree_handler->ambient = glm::vec3(0.3f);
+	small_tree_handler->diffuse = glm::vec3(0.5f);
+	small_tree_handler->specular = glm::vec3(0.3f);
 
 	model = glm::translate(model, glm::vec3(+9.8f, 0.0f, -0.3f));
 	model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -424,4 +548,63 @@ void App::buildSmallTree(void) {
 	model = glm::translate(model, glm::vec3(-6.0f, 0.0f, 0.0f));
 
 	small_tree_handler->model = model;
+}
+
+void App::buildCandle(void) {
+	glm::mat4 model(1.0f);
+
+	candle_handler = obj_loader.load("obj/in/Candle_2.obj");
+	candle_handler->inside = 0.0f;
+	candle_handler->ambient = glm::vec3(0.8f);
+	candle_handler->diffuse = glm::vec3(2.0f);
+	candle_handler->specular = glm::vec3(0.0f);
+
+	model = glm::translate(model, glm::vec3(6.5f, 1.0f, -2.3f));
+	model = glm::scale(model, glm::vec3(1.5f));
+
+	//main_shader->setUniformVec3("u_lights[1].pos", glm::vec3(0.0f, 1.6f, -3.0f));
+	main_shader->setUniformVec3("u_lights[0].pos", glm::vec3(6.5f, 1.7f, -2.3f));
+	main_shader->setUniformVec3("u_lights[0].intensity", glm::vec3(1.0f));
+	main_shader->setUniformVec3("u_lights[0].color", glm::vec3(2.0f, 2.0f, 0.0f));
+
+	candle_handler->model = model;
+}
+
+void App::buildLantern(void) {
+	glm::mat4 model(1.0f);
+
+	lantern_handler = obj_loader.load("obj/in/Lantern_Wall.obj");
+	lantern_handler->inside = 1.0f;
+	lantern_handler->ambient = glm::vec3(0.5f);
+	lantern_handler->diffuse = glm::vec3(1.0f);
+	lantern_handler->specular = glm::vec3(2.0f);
+
+	model = glm::translate(model, glm::vec3(-3.5f, 1.5f, 1.3f));
+	model = glm::scale(model, glm::vec3(1.5f));
+	model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+	main_shader->setUniformVec3("u_lights[2].pos", glm::vec3(-2.0f, 2.0f, 1.3f));
+	main_shader->setUniformVec3("u_lights[2].intensity", glm::vec3(1.0f));
+	main_shader->setUniformVec3("u_lights[2].color", glm::vec3(0.5f));
+
+	lantern_handler->model = model;
+}
+
+void App::buildTorch(void) {
+	glm::mat4 model(1.0f);
+
+	torch_handler = obj_loader.load("obj/in/Candle_1.obj");
+	torch_handler->inside = 1.0f;
+	torch_handler->ambient = glm::vec3(0.7f);
+	torch_handler->diffuse = glm::vec3(1.0f);
+	torch_handler->specular = glm::vec3(2.0f);
+
+	model = glm::translate(model, glm::vec3(-0.0f, 1.0f, -3.3f));
+	model = glm::scale(model, glm::vec3(1.5f));
+
+	main_shader->setUniformVec3("u_lights[1].pos", glm::vec3(0.0f, 1.4f, -3.4f));
+	main_shader->setUniformVec3("u_lights[1].intensity", glm::vec3(1.0f));
+	main_shader->setUniformVec3("u_lights[1].color", glm::vec3(0.7f, 0.7f, 0.0f));
+
+	torch_handler->model = model;
 }

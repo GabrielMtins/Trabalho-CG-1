@@ -44,6 +44,11 @@ void ObjectHandler::render(Shader& shader) {
 
 	shader.setUniformInt("u_texture", 0);
 	shader.setUniformMat4("u_model", model);
+	shader.setUniformVec3("u_ambient", ambient);
+	shader.setUniformVec3("u_diffuse", diffuse);
+	shader.setUniformVec3("u_specular", specular);
+	shader.setUniformFloat("u_shineness", shineness);
+	shader.setUniformFloat("u_inside", inside);
 
 	shader.use();
 

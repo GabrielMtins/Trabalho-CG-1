@@ -11,11 +11,20 @@ class Logic {
 		Logic(void);
 
 		void processInput(GLFWwindow *window, float dt);
+		glm::vec3 getPos(void);
 
 		glm::mat4 view;
 		glm::mat4 book_matrix;
 		glm::mat4 chair_matrix;
 		glm::mat4 tree_matrix;
+		glm::mat4 candle_matrix;
+
+		bool candle_working = true;
+		bool lantern_working = true;
+
+		float ambient_scale = 1.0f;
+		float specular_scale = 1.0f;
+		float diffuse_scale = 1.0f;
 
 	private:
 		void processMouseMovement(GLFWwindow *window, float dt);
@@ -31,11 +40,13 @@ class Logic {
 
 		float book_rotation;
 		float chair_offset;
-		float tree_scale;
+		float tree_scale = 1.0f;
+		float candle_offset = 0.0f;
 
 		glm::mat4 base_book_matrix;
 		glm::mat4 base_chair_matrix;
 		glm::mat4 base_tree_matrix;
+		glm::mat4 base_candle_matrix;
 
 		int old_p_state;
 		int gl_fill_mode;

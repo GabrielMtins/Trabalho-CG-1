@@ -40,9 +40,14 @@ class App {
 		void buildBench(void);
 		void buildTable(void);
 		void buildBook(void);
+		void buildLights(void);
 
 		void buildBigTree(void);
 		void buildSmallTree(void);
+
+		void buildCandle(void);
+		void buildLantern(void);
+		void buildTorch(void);
 
 		GLFWwindow *window = NULL;
 
@@ -67,6 +72,10 @@ class App {
 
 		std::unique_ptr<ObjectHandler> big_tree_handler;
 		std::unique_ptr<ObjectHandler> small_tree_handler;
+
+		std::unique_ptr<ObjectHandler> candle_handler;
+		std::unique_ptr<ObjectHandler> lantern_handler;
+		std::unique_ptr<ObjectHandler> torch_handler;
 
 		ObjLoader obj_loader;
 

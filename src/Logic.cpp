@@ -5,6 +5,8 @@
 
 #include <cmath>
 
+#define CLAMP(i, a, b) (i = (((i) > (a)) ? ((i) < (b) ? (i) : (b)) : (a)))
+
 Logic::Logic(void) {
 	old_p_state = GLFW_PRESS;
 	gl_fill_mode = GL_FILL;
@@ -27,6 +29,18 @@ void Logic::processInput(GLFWwindow *window, float dt) {
 		}
 	
 		old_p_state = new_p_state;
+	}
+
+	candle_working = true;
+	lantern_working = true;
+
+
+	if(glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
+		candle_working = false;
+	}
+
+	if(glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
+		lantern_working = false;
 	}
 
 	// alterar a direcao desejada
@@ -105,6 +119,50 @@ void Logic::processInput(GLFWwindow *window, float dt) {
 
 	processMouseMovement(window, dt);
 	computeMatrices();
+
+	const float scaling_vel = 1.0f;
+
+	if(glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
+		ambient_scale -= scaling_vel * dt;
+	} 
+
+	if(glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
+		ambient_scale += scaling_vel * dt;
+	} 
+
+	if(glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
+		diffuse_scale -= scaling_vel * dt;
+	} 
+
+	if(glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
+		diffuse_scale += scaling_vel * dt;
+	} 
+
+	if(glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) {
+		specular_scale -= scaling_vel * dt;
+	} 
+
+	if(glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) {
+		specular_scale += scaling_vel * dt;
+	} 
+
+	if(glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
+		candle_offset -= 1.0f * dt;
+	}
+
+	if(glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS) {
+		candle_offset += 1.0f * dt;
+	}
+
+	CLAMP(diffuse_scale,  0.0f, 1.0f);
+	CLAMP(ambient_scale,  0.0f, 1.0f);
+	CLAMP(specular_scale, 0.0f, 1.0f);
+
+	CLAMP(candle_offset, 0.0f, 1.0f);
+}
+
+glm::vec3 Logic::getPos(void) {
+	return -camera.pos;
 }
 
 void Logic::processMouseMovement(GLFWwindow *window, float dt) {
@@ -168,6 +226,13 @@ void Logic::setUpMatrices(void) {
 		base_tree_matrix = model;
 	}
 
+	{
+		glm::mat4 model(1.0f);
+		model = glm::translate(model, glm::vec3(6.5f, 1.0f, -2.3f));
+		model = glm::scale(model, glm::vec3(1.5f));
+		base_candle_matrix = model;
+	}
+
 }
 
 // computar as matrizes de acordo com suas atualizacoes
@@ -184,4 +249,7 @@ void Logic::computeMatrices(void) {
 	tree_matrix = base_tree_matrix;
 	tree_matrix = glm::translate(tree_matrix, glm::vec3(+6.8f, 0.0f, -0.3f));
 	tree_matrix = glm::scale(tree_matrix, glm::vec3(tree_scale * 2.0f + 1.0f));
+
+	candle_matrix = base_candle_matrix;
+	candle_matrix = glm::translate(candle_matrix, glm::vec3(0.0f, 0.0f, candle_offset * 2.3f));
 }

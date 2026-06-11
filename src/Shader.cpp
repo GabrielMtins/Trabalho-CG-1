@@ -77,6 +77,22 @@ void Shader::setUniformInt(const std::string& name, int i) {
 			);
 }
 
+void Shader::setUniformFloat(const std::string& name, float i) {
+	int location;
+
+	location = getUniformLocation(name);
+
+	if(location < 0) {
+		printf("Error: Não há o uniform de nome: %s\n", name.c_str());
+	}
+
+	use();
+	glUniform1f(
+			location,
+			i
+			);
+}
+
 // Passa um vetor 3D do C++ para a variável uniform do shader
 void Shader::setUniformVec3(const std::string& name, const glm::vec3& pos) {
 	int location;
