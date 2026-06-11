@@ -580,7 +580,7 @@ void App::buildCandle(void) {
 	//main_shader->setUniformVec3("u_lights[1].pos", glm::vec3(0.0f, 1.6f, -3.0f));
 	main_shader->setUniformVec3("u_lights[0].pos", glm::vec3(6.5f, 1.7f, -2.0f));
 	main_shader->setUniformVec3("u_lights[0].intensity", glm::vec3(1.0f));
-	main_shader->setUniformVec3("u_lights[0].color", glm::vec3(2.0f, 2.0f, 0.0f));
+	main_shader->setUniformVec3("u_lights[0].color", glm::vec3(1.0f, 1.0f, 0.0f));
 
 	candle_handler->model = model;
 }
@@ -594,13 +594,13 @@ void App::buildLantern(void) {
 	lantern_handler->diffuse = glm::vec3(1.0f);
 	lantern_handler->specular = glm::vec3(2.0f);
 
-	model = glm::translate(model, glm::vec3(-3.5f, 1.5f, 1.3f));
-	model = glm::scale(model, glm::vec3(1.5f));
+	model = glm::translate(model, glm::vec3(-3.8f, 1.5f, 1.3f));
+	model = glm::scale(model, glm::vec3(1.0f));
 	model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 	main_shader->setUniformVec3("u_lights[2].pos", glm::vec3(-2.0f, 2.0f, 1.3f));
 	main_shader->setUniformVec3("u_lights[2].intensity", glm::vec3(1.0f));
-	main_shader->setUniformVec3("u_lights[2].color", glm::vec3(0.5f));
+	main_shader->setUniformVec3("u_lights[2].color", glm::vec3(0.2f, 0.5f, 1.0f));
 
 	lantern_handler->model = model;
 }
