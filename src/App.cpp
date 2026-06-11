@@ -77,7 +77,7 @@ static const char *fragment_shader_src = "#version 330 core\n"
 	"   vec3 view_dir = normalize(u_viewpos - v_fragpos);"
 	"   vec3 reflect_dir = reflect(-u_sun.dir, norm);"
 	"   float spec = pow(max(dot(view_dir, reflect_dir), 0.0), u_shineness);"
-	"   return u_sun.color * (diff * u_diffuse * u_diffuse_scale + spec * u_specular * u_specular_scale);"
+	"   return u_sun.intensity * u_sun.color * (diff * u_diffuse * u_diffuse_scale + spec * u_specular * u_specular_scale);"
 	"}"
 	"void main()\n"
 	"{\n"
@@ -216,6 +216,18 @@ void App::loop(void) {
 		main_shader->setUniformVec3("u_lights[2].intensity", glm::vec3(1.0f));
 	} else {
 		main_shader->setUniformVec3("u_lights[2].intensity", glm::vec3(0.0f));
+	}
+
+	if(logic.torch_working) {
+		main_shader->setUniformVec3("u_lights[0].intensity", glm::vec3(1.0f));
+	} else {
+		main_shader->setUniformVec3("u_lights[0].intensity", glm::vec3(0.0f));
+	}
+
+	if(logic.sun_working) {
+		main_shader->setUniformVec3("u_sun.intensity", glm::vec3(1.0f));
+	} else {
+		main_shader->setUniformVec3("u_sun.intensity", glm::vec3(0.0f));
 	}
 
 	renderSkybox();
@@ -432,6 +444,7 @@ void App::buildBed(void) {
 	bed_handler = obj_loader.load("obj/in/Bed_Twin1.obj");
 	bed_handler->inside = 1.0f;
 	bed_handler->specular = glm::vec3(0.3f);
+	bed_handler->ambient = glm::vec3(0.6f);
 	bed_handler->shineness = 4.0f;
 	
 	model = glm::translate(model, glm::vec3(-2.7f, 0.0f, -3.0f));
@@ -446,6 +459,7 @@ void App::buildChest(void) {
 	chest_handler->inside = 1.0f;
 	chest_handler->diffuse = glm::vec3(2.0f);
 	chest_handler->shineness = 64.0f;
+	chest_handler->ambient = glm::vec3(0.6f);
 
 	model = glm::translate(model, glm::vec3(-2.8f, 0.0f, -0.3f));
 	model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -460,6 +474,7 @@ void App::buildChair(void) {
 	chair_handler = obj_loader.load("obj/in/Chair_1.obj");
 	chair_handler->inside = 1.0f;
 	chair_handler->specular = glm::vec3(0.0f);
+	chair_handler->ambient = glm::vec3(0.6f);
 
 	model = glm::translate(model, glm::vec3(+0.8f, 0.0f, -0.3f));
 	model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -489,7 +504,7 @@ void App::buildTable(void) {
 
 	table_handler = obj_loader.load("obj/in/Table_Large.obj");
 	table_handler->inside = 1.0f;
-	table_handler->ambient = glm::vec3(0.0f);
+	table_handler->ambient = glm::vec3(0.6f);
 	table_handler->diffuse = glm::vec3(1.0f);
 	table_handler->specular = glm::vec3(0.0f);
 
@@ -563,7 +578,7 @@ void App::buildCandle(void) {
 	model = glm::scale(model, glm::vec3(1.5f));
 
 	//main_shader->setUniformVec3("u_lights[1].pos", glm::vec3(0.0f, 1.6f, -3.0f));
-	main_shader->setUniformVec3("u_lights[0].pos", glm::vec3(6.5f, 1.7f, -2.3f));
+	main_shader->setUniformVec3("u_lights[0].pos", glm::vec3(6.5f, 1.7f, -2.0f));
 	main_shader->setUniformVec3("u_lights[0].intensity", glm::vec3(1.0f));
 	main_shader->setUniformVec3("u_lights[0].color", glm::vec3(2.0f, 2.0f, 0.0f));
 

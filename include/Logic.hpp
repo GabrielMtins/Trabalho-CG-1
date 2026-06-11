@@ -21,6 +21,8 @@ class Logic {
 
 		bool candle_working = true;
 		bool lantern_working = true;
+		bool torch_working = true;
+		bool sun_working = true;
 
 		float ambient_scale = 1.0f;
 		float specular_scale = 1.0f;

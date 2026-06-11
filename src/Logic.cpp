@@ -33,7 +33,8 @@ void Logic::processInput(GLFWwindow *window, float dt) {
 
 	candle_working = true;
 	lantern_working = true;
-
+	torch_working = true;
+	sun_working = true;
 
 	if(glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
 		candle_working = false;
@@ -41,6 +42,14 @@ void Logic::processInput(GLFWwindow *window, float dt) {
 
 	if(glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
 		lantern_working = false;
+	}
+
+	if(glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS) {
+		torch_working = false;
+	}
+
+	if(glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS) {
+		sun_working = false;
 	}
 
 	// alterar a direcao desejada
